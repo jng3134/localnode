@@ -27,18 +27,16 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettings }) => {
-  const { 
-    conversations, 
-    activeConversationId, 
-    setActiveConversationId,
-    createConversation,
-    deleteConversation,
-    togglePinConversation,
-    searchQuery,
-    setSearchQuery,
-    clearAllConversations,
-    settings
-  } = useChatStore();
+  const conversations = useChatStore((state) => state.conversations);
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
+  const setActiveConversationId = useChatStore((state) => state.setActiveConversationId);
+  const createConversation = useChatStore((state) => state.createConversation);
+  const deleteConversation = useChatStore((state) => state.deleteConversation);
+  const togglePinConversation = useChatStore((state) => state.togglePinConversation);
+  const searchQuery = useChatStore((state) => state.searchQuery);
+  const setSearchQuery = useChatStore((state) => state.setSearchQuery);
+  const clearAllConversations = useChatStore((state) => state.clearAllConversations);
+  const activeProviderId = useChatStore((state) => state.settings.activeProviderId);
 
   const handleNewChat = () => {
     createConversation();
@@ -180,9 +178,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
           <div className="p-4 border-t border-[#262626] bg-[#0A0A0A] space-y-3 flex-shrink-0 text-xs">
             <div className="flex items-center justify-between text-zinc-450">
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${settings.activeProviderId === 'gemini' ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${activeProviderId === 'gemini' ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}></div>
                 <div className="font-mono text-[11px] text-zinc-450">
-                  Engine: <span className="text-white font-semibold">{settings.activeProviderId === 'gemini' ? 'Gemini' : settings.activeProviderId.toUpperCase()}</span>
+                  Engine: <span className="text-white font-semibold">{activeProviderId === 'gemini' ? 'Gemini' : activeProviderId.toUpperCase()}</span>
                 </div>
               </div>
               

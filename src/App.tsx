@@ -22,16 +22,19 @@ import {
 import { motion } from 'motion/react';
 
 export default function App() {
-  const { 
-    settings, 
-    conversations, 
-    activeConversationId, 
-    fetchModels,
-    createConversation,
-    models,
-    isLoadingModels,
-    setTheme
-  } = useChatStore();
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
+  const activeConversationTitle = useChatStore((state) => 
+    state.activeConversationId ? state.conversations[state.activeConversationId]?.title : ''
+  );
+  const activeModelId = useChatStore((state) => state.settings.activeModelId);
+  const activeProviderId = useChatStore((state) => state.settings.activeProviderId);
+  const theme = useChatStore((state) => state.settings.theme);
+  const modelsCount = useChatStore((state) => state.models.length);
+  const isLoadingModels = useChatStore((state) => state.isLoadingModels);
+
+  const fetchModels = useChatStore((state) => state.fetchModels);
+  const createConversation = useChatStore((state) => state.createConversation);
+  const setTheme = useChatStore((state) => state.setTheme);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -40,8 +43,6 @@ export default function App() {
   useEffect(() => {
     fetchModels();
   }, []);
-
-  const activeConversation = activeConversationId ? conversations[activeConversationId] : null;
 
   const handleOpenSettings = () => {
     setSettingsOpen(true);
@@ -83,7 +84,7 @@ export default function App() {
             <div className="flex flex-col">
               <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest font-sans">Active Thread</span>
               <span className="font-semibold text-sm md:text-base text-[#EDEDED] line-clamp-1 truncate max-w-[200px] md:max-w-[400px]">
-                {activeConversation ? activeConversation.title : 'New Prompt'}
+                {activeConversationTitle || 'New Prompt'}
               </span>
             </div>
 
@@ -91,9 +92,9 @@ export default function App() {
             <div className="flex flex-col ml-6 pl-6 border-l border-[#262626] hidden sm:flex">
               <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Active Model</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${isLoadingModels ? 'bg-amber-400 animate-ping' : models.length > 0 ? 'bg-green-500' : 'bg-rose-500'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${isLoadingModels ? 'bg-amber-400 animate-ping' : modelsCount > 0 ? 'bg-green-500' : 'bg-rose-500'}`} />
                 <span className="text-xs font-mono font-medium text-zinc-400 leading-none">
-                  {settings.activeModelId || 'No active connection'} ({settings.activeProviderId.toUpperCase()})
+                  {activeModelId || 'No active connection'} ({activeProviderId.toUpperCase()})
                 </span>
               </div>
             </div>
@@ -113,11 +114,11 @@ export default function App() {
 
             {/* Theme switcher (subtle monochrome icon) */}
             <button
-              onClick={() => setTheme(settings.theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title="Toggle theme mode"
               className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-[#1A1A1A] border border-transparent hover:border-[#333] cursor-pointer transition"
             >
-              {settings.theme === 'dark' ? (
+              {theme === 'dark' ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                 </svg>

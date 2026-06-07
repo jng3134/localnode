@@ -160,13 +160,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onOpenSettings }) => {
       className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 scroll-smooth w-full bg-[#0A0A0A]"
     >
       <div className="max-w-4xl mx-auto space-y-6">
-        {activeMessages.map((message) => (
-          <MessageBubble 
-            key={message.id} 
-            message={message} 
-            conversation={activeConversation!} 
-          />
-        ))}
+        {activeMessages.map((message) => {
+          const parentId = message.parentId;
+          const parentMsg = parentId && activeConversation ? activeConversation.messages[parentId] : null;
+          const branchSiblings = parentMsg ? (parentMsg.branchIds || []) : [];
+          return (
+            <MessageBubble 
+              key={message.id} 
+              message={message} 
+              branchSiblings={branchSiblings} 
+            />
+          );
+        })}
 
         {/* Floating spacer to aid scroll anchors */}
         <div ref={bottomSpacerRef} className="h-4" />

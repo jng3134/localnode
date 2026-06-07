@@ -21,17 +21,17 @@ const GENERAL_TEMPLATES: PromptTemplate[] = [
 ];
 
 export const ChatInput: React.FC = () => {
-  const { 
-    sendMessage, 
-    isGeneratingCount, 
-    stopGeneration, 
-    activeConversationId,
-    settings,
-    models,
-    updateSettings,
-    fetchModels,
-    isLoadingModels
-  } = useChatStore();
+  const sendMessage = useChatStore((state) => state.sendMessage);
+  const isGeneratingCount = useChatStore((state) => state.isGeneratingCount);
+  const stopGeneration = useChatStore((state) => state.stopGeneration);
+  const activeConversationId = useChatStore((state) => state.activeConversationId);
+  const activeModelId = useChatStore((state) => state.settings.activeModelId);
+  const activeProviderId = useChatStore((state) => state.settings.activeProviderId);
+  const models = useChatStore((state) => state.models);
+  const updateSettings = useChatStore((state) => state.updateSettings);
+  const fetchModels = useChatStore((state) => state.fetchModels);
+  const isLoadingModels = useChatStore((state) => state.isLoadingModels);
+
   const [input, setInput] = useState('');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showModels, setShowModels] = useState(false);
@@ -144,7 +144,7 @@ export const ChatInput: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A1A1A] border border-[#262626] text-[10px] uppercase tracking-wider text-zinc-400 hover:text-white cursor-pointer font-semibold font-sans select-none"
             >
               <Cpu size={11} className="text-blue-400" />
-              <span>Model: <b className="text-zinc-250 normal-case">{settings.activeModelId || 'Select Model'}</b></span>
+              <span>Model: <b className="text-zinc-250 normal-case">{activeModelId || 'Select Model'}</b></span>
               <ChevronDown size={11} className={`transition-transform duration-150 ${showModels ? 'rotate-180' : ''}`} />
             </button>
 
@@ -165,7 +165,7 @@ export const ChatInput: React.FC = () => {
                 </div>
                 {models.length === 0 ? (
                   <div className="px-3 py-4 text-xs text-zinc-500 text-center">
-                    No models found for <b className="text-zinc-350">{settings.activeProviderId.toUpperCase()}</b>.
+                    No models found for <b className="text-zinc-350">{activeProviderId.toUpperCase()}</b>.
                     <br />
                     <span className="text-[10px] text-zinc-600 mt-1.5 block">Configure this provider or endpoint in Settings.</span>
                   </div>
@@ -180,7 +180,7 @@ export const ChatInput: React.FC = () => {
                           setShowModels(false);
                         }}
                         className={`flex flex-col text-left px-3 py-2 text-xs rounded-lg cursor-pointer transition-colors ${
-                          settings.activeModelId === m.id
+                          activeModelId === m.id
                             ? 'bg-orange-500/10 text-orange-400 font-medium'
                             : 'text-zinc-300 hover:bg-[#1A1A1A]'
                         }`}

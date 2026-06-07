@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { Message, Conversation } from '../../types';
+import React, { useState, memo } from 'react';
+import { Message } from '../../types';
 import { useChatStore } from '../../store/useChatStore';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { 
@@ -24,10 +24,10 @@ import { motion } from 'motion/react';
 
 interface MessageBubbleProps {
   message: Message;
-  conversation: Conversation;
+  branchSiblings: string[];
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, conversation }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, branchSiblings }) => {
   const { switchBranch, editMessage, regenerateMessage } = useChatStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -38,8 +38,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, conversat
 
   // Resolve peer branches at this level (sharing same parent)
   const parentId = message.parentId;
-  const parentMsg = parentId ? conversation.messages[parentId] : null;
-  const branchSiblings = parentMsg ? (parentMsg.branchIds || []) : [];
   const branchIndex = branchSiblings.indexOf(message.id);
   const totalBranches = branchSiblings.length;
   const hasBranches = totalBranches > 1 && branchIndex !== -1;
@@ -241,4 +239,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, conversat
       </div>
     </motion.div>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.error === nextProps.message.error &&
+    prevProps.message.timestamp === nextProps.message.timestamp &&
+    prevProps.message.model === nextProps.message.model &&
+    prevProps.branchSiblings.length === nextProps.branchSiblings.length &&
+    prevProps.branchSiblings.join(',') === nextProps.branchSiblings.join(',')
+  );
+});

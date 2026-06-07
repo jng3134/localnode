@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import Markdown from 'react-markdown';
 import { Copy, Check, Terminal } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface CodeBlockProps {
   value: string;
 }
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -57,13 +57,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
       </div>
     </div>
   );
-};
+});
 
 interface MarkdownRendererProps {
   content: string;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({ content }) => {
   return (
     <div className="markdown-body prose prose-zinc dark:prose-invert prose-xs md:prose-sm max-w-none break-words leading-relaxed select-text text-zinc-800 dark:text-zinc-200">
       <Markdown
@@ -163,4 +163,4 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
       </Markdown>
     </div>
   );
-};
+});
