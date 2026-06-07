@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useChatStore } from '../../store/useChatStore';
 import { ProviderConfig, AppSettings } from '../../types';
+import { toast } from 'sonner';
 import { 
   X, 
   Database, 
@@ -87,7 +88,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);
-      alert('Backup generation failed.');
+      toast.error('Backup generation failed.');
     }
   };
 
@@ -537,7 +538,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             a.download = resExp.filename;
                             a.click();
                           } else {
-                            alert('No active chat context to export.');
+                            toast.error('No active chat context to export.');
                           }
                         }}
                         className="flex-1 sm:flex-none px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl tracking-wider text-white cursor-pointer uppercase font-bold text-[10px] transition-colors text-center"
@@ -554,7 +555,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             a.download = resExp.filename;
                             a.click();
                           } else {
-                            alert('No active chat context.');
+                            toast.error('No active chat context.');
                           }
                         }}
                         className="flex-1 sm:flex-none px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl tracking-wider text-white cursor-pointer uppercase font-bold text-[10px] transition-colors text-center"

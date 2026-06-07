@@ -9,6 +9,7 @@ import { Sidebar } from './components/sidebar/Sidebar';
 import { ChatWindow } from './components/chat/ChatWindow';
 import { ChatInput } from './components/chat/ChatInput';
 import { SettingsModal } from './components/settings/SettingsModal';
+import { Toaster } from 'sonner';
 import { 
   Menu, 
   Settings, 
@@ -36,7 +37,10 @@ export default function App() {
   const createConversation = useChatStore((state) => state.createConversation);
   const setTheme = useChatStore((state) => state.setTheme);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') return window.innerWidth >= 768;
+    return true;
+  });
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Load models on initial loading
@@ -53,10 +57,10 @@ export default function App() {
   };
 
   return (
-    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-gradient-to-br from-[#120536] via-[#2F1387] to-[#6042D9] text-[#EDEDED] font-sans selection:bg-indigo-500/30 relative">
-      {/* Ocean Ambient Glow Spots */}
-      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-white/15 blur-[160px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] left-[-14%] w-[60vw] h-[60vw] rounded-full bg-[#0a0225]/40 blur-[140px] pointer-events-none z-0"></div>
+    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-gradient-to-br from-[#120536] via-[#2F1387] to-[#5b3bc9] text-[#EDEDED] font-sans selection:bg-indigo-500/30 relative">
+      <Toaster richColors position="top-center" theme="dark" />
+      {/* High-performance ambient glow replacements (no blur filters) */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_100%_0%,_rgba(255,255,255,0.06)_0%,_transparent_50%),radial-gradient(circle_at_0%_100%,_rgba(10,2,37,0.5)_0%,_transparent_50%)] pointer-events-none" />
       
       {/* 1. Left Drawer Sidebar */}
       <Sidebar 

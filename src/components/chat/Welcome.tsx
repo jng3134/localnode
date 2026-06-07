@@ -13,12 +13,13 @@ export const Welcome: React.FC<WelcomeProps> = ({ onOpenSettings, onQuickPrompt 
   const activeProvider = settings.providerConfigs[settings.activeProviderId];
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 select-none overflow-y-auto w-full bg-transparent">
+    <div className="flex-1 flex flex-col items-center overflow-y-auto w-full bg-transparent invisible-scrollbar px-6 md:px-12 select-none">
+      <div className="flex-1 min-h-[40px] shrink-0"></div>
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
-        className="max-w-2xl w-full text-center flex flex-col items-center gap-8 md:gap-10 py-6 font-sans relative z-10"
+        className="max-w-2xl w-full text-center flex flex-col items-center gap-8 md:gap-10 py-6 font-sans relative z-10 shrink-0"
       >
         {/* Logo Emblem */}
         <div className="flex items-center justify-center">
@@ -65,7 +66,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onOpenSettings, onQuickPrompt 
                 </p>
                 <p className="border-l-2 border-indigo-400 bg-indigo-500/10 pl-3 py-1.5 text-indigo-200">
                   ⚠️ <b>CORS Requirement:</b> Ollama blocks direct browser requests unless run with `OLLAMA_ORIGINS="*"`. If you encounter connection blocks, stop Ollama and launch it in your terminal via:<br/>
-                  <code className="bg-white/10 px-2 py-0.5 rounded font-mono mt-1 text-white inline-block select-all border border-white/10">OLLAMA_ORIGINS="*" ollama serve</code>
+                  <code className="bg-white/10 px-2 py-0.5 rounded font-mono mt-1 text-white inline-flex select-all border border-white/10 break-all w-full text-[10px] md:text-xs overflow-hidden">OLLAMA_ORIGINS="*" ollama serve</code>
                 </p>
               </div>
             )}
@@ -107,6 +108,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onOpenSettings, onQuickPrompt 
           <span>Local-First Design: Your data does not leave your browser or express pipeline.</span>
         </div>
       </motion.div>
+      <div className="flex-[2] min-h-[40px] shrink-0"></div>
     </div>
   );
 };

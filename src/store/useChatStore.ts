@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { ChatState, Conversation, Message, AppSettings, Model, ProviderConfig } from '../types';
 import { getProvider } from '../lib/providers';
+import { toast } from 'sonner';
 
 // Custom lightweight UID generator to avoid external dependencies
 function generateUUID() {
@@ -354,7 +355,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
 
       if (!modelId) {
         // Handle gracefully
-        alert('Please connect to a provider and select a model first!');
+        toast.error('Please connect to a provider and select a model first!');
         return;
       }
 
@@ -537,7 +538,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
       const modelId = settings.activeModelId || targetMsg.model || '';
 
       if (!modelId) {
-        alert('Please select a model!');
+        toast.error('Please select a model!');
         return;
       }
 

@@ -20,6 +20,7 @@ import {
   Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -55,13 +56,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
   return (
     <AnimatePresence initial={false}>
       {isOpen && (
-        <motion.aside
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 280, opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
-          className="flex-shrink-0 flex flex-col h-full bg-transparent text-[#EDEDED] overflow-hidden relative z-20 font-sans"
-        >
+        <>
+          {/* Mobile Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onToggle}
+            className="md:hidden fixed inset-0 z-40 bg-[#030014]/60 backdrop-blur-sm"
+          />
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 280, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="flex-shrink-0 flex flex-col h-full bg-[#120536] md:bg-transparent text-[#EDEDED] overflow-hidden absolute md:relative z-50 font-sans border-r md:border-r-0 border-white/[0.05]"
+          >
           {/* Sidebar Header */}
           <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/[0.05] bg-transparent">
             {/* Minimal label mirroring the app header details */}
@@ -193,9 +204,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
             {Object.keys(conversations).length > 0 && (
               <button
                 onClick={() => {
-                  if (confirm('Are you absolutely sure you want to clear ALL conversations? This cannot be undone.')) {
-                    clearAllConversations();
-                  }
+                  toast('Clear all threads?', {
+                    description: 'This action cannot be undone.',
+                    action: {
+                      label: 'Delete All',
+                      onClick: () => clearAllConversations()
+                    },
+                    cancel: {
+                      label: 'Cancel',
+                      onClick: () => {}
+                    }
+                  });
                 }}
                 className="w-full text-left text-[10px] text-zinc-400 hover:text-rose-400 font-mono transition-colors border-t border-white/[0.05] pt-2 flex items-center gap-1 cursor-pointer"
               >
@@ -205,6 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
             )}
           </div>
         </motion.aside>
+        </>
       )}
     </AnimatePresence>
   );
