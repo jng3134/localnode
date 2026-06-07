@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Sparkles,
   Layers,
-  Trash
+  Trash,
+  Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -62,21 +63,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
           className="flex-shrink-0 flex flex-col h-full bg-transparent text-[#EDEDED] overflow-hidden relative z-20 font-sans"
         >
           {/* Sidebar Header */}
-          <div className="p-6 flex items-center justify-between border-b border-white/[0.05] bg-transparent">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <div className="w-3.5 h-3.5 border-2 border-white rotate-45 rounded-[2px]"></div>
-              </div>
-              <span className="font-semibold tracking-tight text-lg text-white">LocalNode</span>
-            </div>
-
+          <div className="h-[72px] px-6 flex items-center justify-between border-b border-white/[0.05] bg-transparent">
+            {/* Minimal label mirroring the app header details */}
+            <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest font-sans">Thread History</span>
             <button
               onClick={onToggle}
               title="Close sidebar"
               id="sidebar-close-btn"
-              className="p-2 hover:bg-white/10 rounded-md transition-colors text-zinc-400 hover:text-white cursor-pointer"
+              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white cursor-pointer"
             >
-              <ChevronLeft size={16} />
+              <Menu size={18} />
             </button>
           </div>
 

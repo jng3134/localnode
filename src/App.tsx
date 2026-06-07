@@ -69,24 +69,32 @@ export default function App() {
       <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-transparent z-10">
         
         {/* Top Navbar Header */}
-        <header className="flex-shrink-0 h-16 border-b border-white/[0.07] bg-white/[0.01]/75 backdrop-blur-md flex items-center justify-between px-6 md:px-8 relative z-10 transition-colors">
-          <div className="flex items-center gap-3">
+        <header className="flex-shrink-0 h-[72px] border-b border-white/[0.07] bg-white/[0.01]/75 backdrop-blur-md flex items-center justify-between px-6 md:px-8 relative z-10 transition-colors">
+          <div className="flex items-center gap-4">
             {/* Sidebar toggle if collapsed */}
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
                 id="sidebar-toggle-trigger"
                 title="Open thread menu"
-                className="p-1 px-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 cursor-pointer transition mr-2"
+                className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 cursor-pointer transition"
               >
                 <Menu size={18} />
               </button>
             )}
 
+            {/* Logo Emblem */}
+            <div className={`flex items-center gap-2 ${sidebarOpen ? '' : 'ml-2'} mr-4`}>
+              <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div className="w-3.5 h-3.5 border-2 border-white rotate-45 rounded-[2px]" />
+              </div>
+              <span className="font-semibold tracking-tight text-[17px] text-white">LocalNode</span>
+            </div>
+
             {/* Conversation active details */}
-            <div className="flex flex-col">
+            <div className="flex flex-col border-l border-white/10 pl-5 hidden sm:flex">
               <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest font-sans">Active Thread</span>
-              <span className="font-semibold text-sm md:text-base text-[#EDEDED] line-clamp-1 truncate max-w-[200px] md:max-w-[400px]">
+              <span className="font-medium text-sm text-[#EDEDED] line-clamp-1 truncate max-w-[150px] lg:max-w-[300px]">
                 {activeConversationTitle || 'New Prompt'}
               </span>
             </div>
