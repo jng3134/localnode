@@ -39,10 +39,17 @@ app.get('/api/providers/gemini/models', async (req, res) => {
   }
 
   try {
-    const listRes = (await ai.models.list()) as any;
-    const models = (listRes.models || [])
+    const response = await ai.models.list();
+    const allModels: any[] = [];
+    for await (const m of response) {
+      allModels.push(m);
+    }
+    
+    // In GenAI SDK, supportedActions might be undefined for some models depending on the endpoint,
+    // so we broadly accept generateContent or we just allow things that don't start with embedding
+    const models = allModels
       .filter((m: any) => 
-        (m.supportedActions?.includes('generateContent') || m.supportedGenerationMethods?.includes('generateContent')) && 
+        (m.supportedActions?.includes('generateContent') || !m.supportedActions) && 
         !m.name.startsWith('models/embedding') && 
         !m.name.includes('bidi') && 
         !m.name.includes('aqa')

@@ -53,7 +53,10 @@ export default function App() {
   };
 
   return (
-    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-[#0A0A0A] text-[#EDEDED] font-sans selection:bg-orange-500/20">
+    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-gradient-to-br from-[#120536] via-[#2F1387] to-[#6042D9] text-[#EDEDED] font-sans selection:bg-indigo-500/30 relative">
+      {/* Ocean Ambient Glow Spots */}
+      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-white/15 blur-[160px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[-14%] w-[60vw] h-[60vw] rounded-full bg-[#0a0225]/40 blur-[140px] pointer-events-none z-0"></div>
       
       {/* 1. Left Drawer Sidebar */}
       <Sidebar 
@@ -63,10 +66,10 @@ export default function App() {
       />
 
       {/* 2. Main Workspace Feed Container */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-[#0A0A0A]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative bg-transparent z-10">
         
         {/* Top Navbar Header */}
-        <header className="flex-shrink-0 h-16 border-b border-[#262626] bg-[#0A0A0A]/85 backdrop-blur-md flex items-center justify-between px-6 md:px-8 relative z-10 transition-colors">
+        <header className="flex-shrink-0 h-16 border-b border-white/[0.07] bg-white/[0.01]/75 backdrop-blur-md flex items-center justify-between px-6 md:px-8 relative z-10 transition-colors">
           <div className="flex items-center gap-3">
             {/* Sidebar toggle if collapsed */}
             {!sidebarOpen && (
@@ -74,7 +77,7 @@ export default function App() {
                 onClick={() => setSidebarOpen(true)}
                 id="sidebar-toggle-trigger"
                 title="Open thread menu"
-                className="p-1 px-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition mr-2"
+                className="p-1 px-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 cursor-pointer transition mr-2"
               >
                 <Menu size={18} />
               </button>
@@ -82,17 +85,17 @@ export default function App() {
 
             {/* Conversation active details */}
             <div className="flex flex-col">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest font-sans">Active Thread</span>
+              <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest font-sans">Active Thread</span>
               <span className="font-semibold text-sm md:text-base text-[#EDEDED] line-clamp-1 truncate max-w-[200px] md:max-w-[400px]">
                 {activeConversationTitle || 'New Prompt'}
               </span>
             </div>
 
             {/* Active Model Indicator Badge */}
-            <div className="flex flex-col ml-6 pl-6 border-l border-[#262626] hidden sm:flex">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Active Model</span>
+            <div className="flex flex-col ml-6 pl-6 border-l border-white/10 hidden sm:flex">
+              <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest">Active Model</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${isLoadingModels ? 'bg-amber-400 animate-ping' : modelsCount > 0 ? 'bg-green-500' : 'bg-rose-500'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${isLoadingModels ? 'bg-amber-400 animate-ping' : modelsCount > 0 ? 'bg-teal-400' : 'bg-rose-500'}`} />
                 <span className="text-xs font-mono font-medium text-zinc-400 leading-none">
                   {activeModelId || 'No active connection'} ({activeProviderId.toUpperCase()})
                 </span>
@@ -106,9 +109,9 @@ export default function App() {
               onClick={handleNewChat}
               title="Start brand new Chat session"
               id="header-new-chat-btn"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#333] bg-[#1A1A1A] text-xs font-medium hover:bg-[#222] text-[#EDEDED] cursor-pointer transition shadow-sm"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-medium hover:bg-white/10 text-[#EDEDED] cursor-pointer transition shadow-sm"
             >
-              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+              <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
               <span>New Prompt</span>
             </button>
 
@@ -116,7 +119,7 @@ export default function App() {
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               title="Toggle theme mode"
-              className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-[#1A1A1A] border border-transparent hover:border-[#333] cursor-pointer transition"
+              className="p-2 rounded-full text-zinc-450 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition"
             >
               {theme === 'dark' ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +137,7 @@ export default function App() {
               onClick={handleOpenSettings}
               title="Studio configuration"
               id="hdr-settings-toggle"
-              className="p-2 hover:bg-[#1A1A1A] rounded-full border border-transparent hover:border-[#333] text-zinc-400 hover:text-white cursor-pointer transition"
+              className="p-2 hover:bg-white/5 rounded-full border border-transparent hover:border-white/10 text-zinc-450 hover:text-white cursor-pointer transition"
             >
               <Settings size={18} />
             </button>
@@ -142,11 +145,11 @@ export default function App() {
         </header>
 
         {/* Feed & Chat Bubble Render Stream Container */}
-        <div className="flex-1 overflow-hidden flex flex-col relative bg-[#0A0A0A]">
+        <div className="flex-1 overflow-hidden flex flex-col relative bg-transparent">
           <ChatWindow onOpenSettings={handleOpenSettings} />
 
           {/* Bottom Prompt Bar Dock Input Section */}
-          <div className="px-4 py-4 md:px-8 md:pb-8 relative z-10 max-w-4xl w-full mx-auto bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A] to-transparent">
+          <div className="px-4 py-4 md:px-8 md:pb-8 relative z-10 max-w-4xl w-full mx-auto bg-transparent">
             <ChatInput />
           </div>
         </div>

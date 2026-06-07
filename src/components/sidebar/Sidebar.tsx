@@ -59,13 +59,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
           animate={{ width: 280, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
-          className="flex-shrink-0 flex flex-col h-full bg-[#0F0F0F] border-r border-[#262626] text-[#EDEDED] overflow-hidden relative z-20 font-sans"
+          className="flex-shrink-0 flex flex-col h-full bg-transparent text-[#EDEDED] overflow-hidden relative z-20 font-sans"
         >
           {/* Sidebar Header */}
-          <div className="p-6 flex items-center justify-between border-b border-[#262626] bg-[#0F0F0F]">
+          <div className="p-6 flex items-center justify-between border-b border-white/[0.05] bg-transparent">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-black rotate-45"></div>
+              <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div className="w-3.5 h-3.5 border-2 border-white rotate-45 rounded-[2px]"></div>
               </div>
               <span className="font-semibold tracking-tight text-lg text-white">LocalNode</span>
             </div>
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
               onClick={onToggle}
               title="Close sidebar"
               id="sidebar-close-btn"
-              className="p-2 hover:bg-[#262626] rounded-md transition-colors text-zinc-400 hover:text-white cursor-pointer"
+              className="p-2 hover:bg-white/10 rounded-md transition-colors text-zinc-400 hover:text-white cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
             <button
               onClick={handleNewChat}
               id="btn-sidebar-new-chat"
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A1A1A] hover:bg-[#222] border border-[#262626] text-[#EDEDED] font-medium text-xs md:text-sm cursor-pointer active:scale-[0.98] transition-all"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-[#EDEDED] font-medium text-xs md:text-sm cursor-pointer active:scale-[0.98] transition-all"
             >
               <Plus size={16} className="text-[#EDEDED]" />
               <span>New Prompt</span>
@@ -94,8 +94,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
 
           {/* Search Box */}
           <div className="px-4 pb-3 flex-shrink-0 relative">
-            <div className="flex items-center bg-[#1A1A1A] rounded-full px-3 py-1.5 border border-[#262626]">
-              <Search size={14} className="text-zinc-500 mr-2 flex-shrink-0" />
+            <div className="flex items-center bg-white/[0.04] rounded-full px-3 py-1.5 border border-white/10">
+              <Search size={14} className="text-zinc-400 mr-2 flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
               </div>
             ) : (
               <>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-3 px-2">Threads</div>
+                <div className="text-[10px] uppercase tracking-widest text-[#9ac1dc] font-bold mb-3 px-2">Threads</div>
                 {filteredConversations.map((c) => {
                   const isActive = activeConversationId === c.id;
                   return (
@@ -124,21 +124,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                       id={`sidebar-item-${c.id}`}
                       className={`group relative p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         isActive 
-                          ? 'bg-[#1A1A1A] border-[#333]' 
-                          : 'hover:bg-[#1A1A1A] border-transparent'
+                          ? 'bg-indigo-500/15 border-indigo-500/30' 
+                          : 'hover:bg-white/[0.04] border-transparent'
                       }`}
                       onClick={() => setActiveConversationId(c.id)}
                     >
                       <div className="flex items-center gap-3 overflow-hidden w-[78%]">
                         {isActive ? (
-                          <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)] flex-shrink-0"></div>
+                          <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.7)] flex-shrink-0"></div>
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-zinc-650 flex-shrink-0 group-hover:bg-zinc-400 transition-colors"></div>
                         )}
                         <span className={`text-[13px] truncate select-none leading-relaxed font-sans ${
                           isActive 
                             ? 'text-[#EDEDED] font-medium' 
-                            : 'text-zinc-400 group-hover:text-zinc-200'
+                            : 'text-zinc-300 group-hover:text-zinc-100'
                         }`}>
                           {c.title}
                         </span>
@@ -152,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                             togglePinConversation(c.id);
                           }}
                           title={c.pinned ? 'Unpin' : 'Pin thread'}
-                          className={`p-1 rounded text-zinc-500 hover:text-[#EDEDED] cursor-pointer hover:bg-zinc-800 transition ${c.pinned ? 'text-amber-500 opacity-100' : ''}`}
+                          className={`p-1 rounded text-zinc-400 hover:text-[#EDEDED] cursor-pointer hover:bg-white/10 transition ${c.pinned ? 'text-indigo-400 opacity-100' : ''}`}
                         >
                           <Pin size={10} fill={c.pinned ? 'currentColor' : 'none'} />
                         </button>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                             deleteConversation(c.id);
                           }}
                           title="Delete thread"
-                          className="p-1 rounded text-zinc-500 cursor-pointer hover:bg-zinc-800 hover:text-rose-400 transition"
+                          className="p-1 rounded text-zinc-400 cursor-pointer hover:bg-white/10 hover:text-rose-455 transition"
                         >
                           <Trash2 size={10} />
                         </button>
@@ -175,11 +175,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
           </div>
 
           {/* Sidebar Footer Controls */}
-          <div className="p-4 border-t border-[#262626] bg-[#0A0A0A] space-y-3 flex-shrink-0 text-xs">
+          <div className="p-4 border-t border-white/[0.05] bg-transparent space-y-3 flex-shrink-0 text-xs font-sans">
             <div className="flex items-center justify-between text-zinc-450">
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${activeProviderId === 'gemini' ? 'bg-blue-400' : 'bg-emerald-400 animate-pulse'}`}></div>
-                <div className="font-mono text-[11px] text-zinc-450">
+                <div className={`w-1.5 h-1.5 rounded-full ${activeProviderId === 'gemini' ? 'bg-indigo-400 shadow-[0_0_6px_rgba(99,102,241,0.6)]' : 'bg-emerald-400 animate-pulse'}`}></div>
+                <div className="font-mono text-[11px] text-zinc-350">
                   Engine: <span className="text-white font-semibold">{activeProviderId === 'gemini' ? 'Gemini' : activeProviderId.toUpperCase()}</span>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
               <button
                 onClick={onOpenSettings}
                 id="btn-sidebar-settings"
-                className="p-1 text-zinc-500 hover:text-[#EDEDED] cursor-pointer transition-colors"
+                className="p-1 text-zinc-400 hover:text-[#EDEDED] cursor-pointer transition-colors"
                 title="API Settings"
               >
                 <Settings size={13} />
@@ -201,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                     clearAllConversations();
                   }
                 }}
-                className="w-full text-left text-[10px] text-zinc-500 hover:text-rose-400 font-mono transition-colors border-t border-[#262626]/50 pt-2 flex items-center gap-1 cursor-pointer"
+                className="w-full text-left text-[10px] text-zinc-400 hover:text-rose-400 font-mono transition-colors border-t border-white/[0.05] pt-2 flex items-center gap-1 cursor-pointer"
               >
                 <Trash size={10} />
                 <span>Clear Threads</span>

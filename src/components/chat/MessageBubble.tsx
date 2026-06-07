@@ -79,16 +79,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
       id={`msg-bubble-${message.id}`}
       className={`group w-full flex gap-4 p-5 md:p-6 rounded-2xl border transition-all ${
         isUser 
-          ? 'bg-[#161616]/50 border-[#262626]/50' 
-          : 'bg-[#161616] border-[#262626] shadow-xl shadow-black/2'
+          ? 'bg-white/[0.02] border-white/[0.05]' 
+          : 'bg-white/[0.08] backdrop-blur-2xl border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.15)]'
       }`}
     >
       {/* Avatar Container */}
       <div className="flex-shrink-0">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center border shadow-sm ${
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${
           isUser 
-            ? 'bg-[#262626] border-[#333] text-zinc-350' 
-            : 'bg-white border-white text-black'
+            ? 'bg-white/10 border-white/10 text-indigo-100' 
+            : 'bg-indigo-500 border-indigo-400 text-white shadow-lg shadow-indigo-500/30'
         }`}>
           {isUser ? <User size={14} /> : <Bot size={14} />}
         </div>
@@ -111,10 +111,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
 
           {/* Sibling Carousel branch controls */}
           {hasBranches && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-[#262626] bg-[#0A0A0A] font-mono text-[9px] text-zinc-500">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-white/10 bg-white/5 font-mono text-[9px] text-zinc-400">
               <button 
                 onClick={handleBranchPrev} 
-                className={`p-0.5 rounded cursor-pointer ${branchIndex > 0 ? 'hover:bg-zinc-800 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                className={`p-0.5 rounded cursor-pointer ${branchIndex > 0 ? 'hover:bg-white/10 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
                 disabled={branchIndex === 0}
               >
                 <ChevronLeft size={10} />
@@ -122,7 +122,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
               <span>{branchIndex + 1} / {totalBranches}</span>
               <button 
                 onClick={handleBranchNext} 
-                className={`p-0.5 rounded cursor-pointer ${branchIndex < totalBranches - 1 ? 'hover:bg-zinc-800 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
+                className={`p-0.5 rounded cursor-pointer ${branchIndex < totalBranches - 1 ? 'hover:bg-white/10 hover:text-white' : 'opacity-30 cursor-not-allowed'}`}
                 disabled={branchIndex === totalBranches - 1}
               >
                 <ChevronRight size={10} />
@@ -132,7 +132,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
         </div>
 
         {/* Text Body */}
-        <div className="text-[#EDEDED] text-sm md:text-base leading-relaxed break-words font-sans selection:bg-orange-500/20">
+        <div className="text-[#EDEDED] text-sm md:text-base leading-relaxed break-words font-sans selection:bg-indigo-500/25">
           {isEditing ? (
             <div className="flex flex-col gap-2 mt-1">
               <textarea
@@ -140,7 +140,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
                 onChange={(e) => setEditContent(e.target.value)}
                 id="edit-message-area"
                 rows={4}
-                className="w-full text-sm font-sans px-3.5 py-2.5 rounded-xl border border-[#262626] bg-[#0A0A0A] focus:outline-none focus:border-[#444] text-[#EDEDED]"
+                className="w-full text-sm font-sans px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 focus:outline-none focus:border-indigo-400/30 text-[#EDEDED]"
               />
               <div className="flex gap-2 self-end">
                 <button
@@ -148,7 +148,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
                     setIsEditing(false);
                     setEditContent(message.content);
                   }}
-                  className="px-3 py-1 rounded bg-[#262626] hover:bg-[#333] text-xs text-zinc-300 cursor-pointer"
+                  className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 text-xs text-zinc-350 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -166,8 +166,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
                 <MarkdownRenderer content={message.content} />
               ) : (
                 !hasError && (
-                  <div className="flex items-center gap-2 text-zinc-500 font-mono text-sm py-1">
-                    <span className="w-1.5 h-1.5 bg-orange-550 rounded-full animate-ping" />
+                  <div className="flex items-center gap-2 text-zinc-400 font-mono text-sm py-1">
+                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-ping" />
                     <span>Thinking...</span>
                   </div>
                 )
@@ -203,13 +203,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
 
         {/* Action Toolbar on Hover */}
         {!isEditing && (
-          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 self-end mt-1 text-zinc-500 transition duration-150">
+          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 self-end mt-1 text-zinc-400 transition duration-150">
             <button
               onClick={handleCopyMessage}
               title="Copy message text"
-              className="p-1 px-1.5 rounded hover:bg-[#262626] hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
+              className="p-1 px-1.5 rounded hover:bg-white/5 hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
             >
-              {copied ? <Check size={13} className="text-orange-500" /> : <Copy size={13} />}
+              {copied ? <Check size={13} className="text-indigo-400" /> : <Copy size={13} />}
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
             
@@ -217,7 +217,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
               <button
                 onClick={() => setIsEditing(true)}
                 title="Edit message"
-                className="p-1 px-1.5 rounded hover:bg-[#262626] hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
+                className="p-1 px-1.5 rounded hover:bg-white/5 hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
               >
                 <Edit3 size={13} />
                 <span>Edit</span>
@@ -228,7 +228,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
               <button
                 onClick={() => regenerateMessage(message.id)}
                 title="Regenerate dynamic response"
-                className="p-1 px-1.5 rounded hover:bg-[#262626] hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
+                className="p-1 px-1.5 rounded hover:bg-white/5 hover:text-[#EDEDED] cursor-pointer text-xs flex items-center gap-1"
               >
                 <RotateCcw size={13} />
                 <span>Regenerate</span>
