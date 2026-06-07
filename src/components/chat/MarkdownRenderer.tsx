@@ -17,9 +17,10 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 interface CodeBlockProps {
   language: string;
   value: string;
+  isGenerating?: boolean;
 }
 
-export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value, isGenerating }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -57,22 +58,28 @@ export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) =>
           )}
         </button>
       </div>
-      <div className="overflow-x-auto select-text">
-        <SyntaxHighlighter
-          language={language.toLowerCase()}
-          style={vscDarkPlus}
-          customStyle={{
-            margin: 0,
-            padding: '1rem',
-            background: 'transparent',
-            fontSize: '0.875rem',
-            lineHeight: '1.5',
-          }}
-          wrapLines={true}
-          wrapLongLines={false}
-        >
-          {value}
-        </SyntaxHighlighter>
+      <div className="overflow-x-auto select-text bg-[#1e1e1e]">
+        {isGenerating ? (
+          <pre className="p-4 m-0 overflow-x-auto text-zinc-200 select-text leading-relaxed bg-transparent font-mono text-xs md:text-sm whitespace-pre">
+            <code>{value}</code>
+          </pre>
+        ) : (
+          <SyntaxHighlighter
+            language={language.toLowerCase()}
+            style={vscDarkPlus}
+            customStyle={{
+              margin: 0,
+              padding: '1rem',
+              background: 'transparent',
+              fontSize: '0.875rem',
+              lineHeight: '1.5',
+            }}
+            wrapLines={true}
+            wrapLongLines={false}
+          >
+            {value}
+          </SyntaxHighlighter>
+        )}
       </div>
     </div>
   );
@@ -80,9 +87,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) =>
 
 interface MarkdownRendererProps {
   content: string;
+  isGenerating?: boolean;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({ content }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({ content, isGenerating }) => {
   return (
     <div className="markdown-body prose prose-zinc dark:prose-invert prose-xs md:prose-sm max-w-none break-words leading-relaxed select-text text-zinc-800 dark:text-zinc-200">
       <Markdown
@@ -101,6 +109,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({ content
                 <CodeBlock
                   language={match ? match[1] : 'text'}
                   value={contentString}
+                  isGenerating={isGenerating}
                 />
               );
             }

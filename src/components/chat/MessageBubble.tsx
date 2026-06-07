@@ -3,10 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, memo } from 'react';
+import React, { useState, memo, lazy, Suspense } from 'react';
 import { Message } from '../../types';
 import { useChatStore } from '../../store/useChatStore';
-import { MarkdownRenderer } from './MarkdownRenderer';
+
+const MarkdownRenderer = lazy(() =>
+  import('./MarkdownRenderer').then((m) => ({ default: m.MarkdownRenderer }))
+);
+
 import { 
   Bot, 
   User, 
@@ -29,6 +33,12 @@ interface MessageBubbleProps {
 
 export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, branchSiblings }) => {
   const { switchBranch, editMessage, regenerateMessage } = useChatStore();
+  const isGenerating = useChatStore((state) => 
+    state.isGeneratingCount > 0 && 
+    state.activeConversationId !== null && 
+    state.conversations[state.activeConversationId]?.activeMessageId === message.id
+  );
+
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [copied, setCopied] = useState(false);
@@ -73,10 +83,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
 
   return (
     <motion.div
-      layout="position"
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
       id={`msg-bubble-${message.id}`}
       className={`group w-full flex gap-4 p-5 md:p-6 rounded-2xl border transition-all ${
         isUser 
@@ -164,7 +173,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
           ) : (
             <>
               {message.content ? (
-                <MarkdownRenderer content={message.content} />
+                <Suspense fallback={
+                  <div className="flex flex-col gap-2 py-2">
+                    <div className="h-4 bg-white/5 rounded w-3/4 animate-pulse" />
+                    <div className="h-4 bg-white/5 rounded w-1/2 animate-pulse" />
+                  </div>
+                }>
+                  <MarkdownRenderer content={message.content} isGenerating={isGenerating} />
+                </Suspense>
               ) : (
                 !hasError && (
                   <div className="flex items-center gap-2 text-zinc-400 font-mono text-sm py-1">
