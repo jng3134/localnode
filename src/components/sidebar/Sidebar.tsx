@@ -190,15 +190,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                   Engine: <span className="text-white font-semibold">{activeProviderId === 'gemini' ? 'Gemini' : activeProviderId.toUpperCase()}</span>
                 </div>
               </div>
-              
-              <button
-                onClick={onOpenSettings}
-                id="btn-sidebar-settings"
-                className="p-1 text-zinc-400 hover:text-[#EDEDED] cursor-pointer transition-colors"
-                title="API Settings"
-              >
-                <Settings size={13} />
-              </button>
             </div>
 
             {Object.keys(conversations).length > 0 && (

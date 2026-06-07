@@ -118,40 +118,13 @@ export default function App() {
           {/* Right Header Navigation Quick triggers */}
           <div className="flex items-center gap-2">
             <button
-              onClick={handleNewChat}
-              title="Start brand new Chat session"
-              id="header-new-chat-btn"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-medium hover:bg-white/10 text-[#EDEDED] cursor-pointer transition shadow-sm"
-            >
-              <div className="w-2 h-2 rounded-full bg-indigo-400"></div>
-              <span>New Prompt</span>
-            </button>
-
-            {/* Theme switcher (subtle monochrome icon) */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              title="Toggle theme mode"
-              className="p-2 rounded-full text-zinc-450 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition"
-            >
-              {theme === 'dark' ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
-
-            {/* Configuration Button */}
-            <button
               onClick={handleOpenSettings}
               title="Studio configuration"
               id="hdr-settings-toggle"
-              className="p-2 hover:bg-white/5 rounded-full border border-transparent hover:border-white/10 text-zinc-450 hover:text-white cursor-pointer transition"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-medium hover:bg-white/10 text-[#EDEDED] cursor-pointer transition shadow-sm"
             >
-              <Settings size={18} />
+              <Settings/>
+              <span>Settings</span>
             </button>
           </div>
         </header>
