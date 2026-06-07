@@ -5,6 +5,10 @@
 
 import React, { useState, memo } from 'react';
 import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
+import 'katex/dist/katex.min.css';
 import { Copy, Check, Terminal } from 'lucide-react';
 
 interface CodeBlockProps {
@@ -67,6 +71,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = memo(({ content
   return (
     <div className="markdown-body prose prose-zinc dark:prose-invert prose-xs md:prose-sm max-w-none break-words leading-relaxed select-text text-zinc-800 dark:text-zinc-200">
       <Markdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           code({ className, children, ...props }) {
             // Check if inline
