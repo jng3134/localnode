@@ -57,7 +57,7 @@ export default function App() {
   };
 
   return (
-    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-gradient-to-br from-[#120536] via-[#2F1387] to-[#5b3bc9] text-[#EDEDED] font-sans selection:bg-indigo-500/30 relative">
+    <div id="studio-app-root" className="flex h-screen w-screen overflow-hidden bg-[linear-gradient(135deg,#120536_0%,#2F1387_40%,#5b3bc9_70%,#c7d2fe_100%)] text-[#EDEDED] font-sans selection:bg-indigo-500/30 relative">
       <Toaster richColors position="top-center" theme="dark" />
       {/* High-performance ambient glow replacements (no blur filters) */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_100%_0%,_rgba(255,255,255,0.06)_0%,_transparent_50%),radial-gradient(circle_at_0%_100%,_rgba(10,2,37,0.5)_0%,_transparent_50%)] pointer-events-none" />
