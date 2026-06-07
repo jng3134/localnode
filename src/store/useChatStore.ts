@@ -84,6 +84,7 @@ export interface ChatStore extends ChatState {
   deleteConversation: (id: string) => void;
   togglePinConversation: (id: string) => void;
   clearAllConversations: () => void;
+  renameConversation: (id: string, title: string) => void;
   
   // Chat Actions
   sendMessage: (content: string, customParentId?: string | null) => Promise<void>;
@@ -338,6 +339,16 @@ export const useChatStore = create<ChatStore>((set, get) => {
       Object.keys(activeAbortControllers).forEach(key => get().stopGeneration(key));
       set({ conversations: {}, activeConversationId: null });
       persistSubstate({ conversations: {}, activeConversationId: null });
+    },
+
+    renameConversation: (id, title) => {
+      const conversations = { ...get().conversations };
+      const target = conversations[id];
+      if (target) {
+        conversations[id] = { ...target, title: title.trim() || 'New Chat', updatedAt: Date.now() };
+        set({ conversations });
+        persistSubstate({ conversations });
+      }
     },
 
     sendMessage: async (content, customParentId = undefined) => {

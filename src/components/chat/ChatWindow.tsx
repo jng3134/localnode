@@ -6,8 +6,8 @@
 import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useChatStore } from '../../store/useChatStore';
 import { Welcome } from './Welcome';
-import { Sparkles, Terminal, Shield, RefreshCw, Import, ArrowRight, Settings } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Sparkles, Terminal, Shield, RefreshCw, Import, ArrowRight, Settings, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Lazily load the MessageBubble component to shrink the initial vendor JS bundle size
 const MessageBubble = lazy(() =>
@@ -41,6 +41,37 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onOpenSettings }) => {
   // Track final message length to scroll on stream
   const lastMsgContent = activeMessages.length > 0 ? activeMessages[activeMessages.length - 1].content : '';
   const isGenerating = isGeneratingCount > 0;
+
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const handleScroll = () => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const threshold = 300;
+    const isScrollable = container.scrollHeight > container.clientHeight;
+    const offsetFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    setShowScrollButton(isScrollable && offsetFromBottom > threshold);
+  };
+
+  const scrollToBottom = () => {
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Re-check scroll position when shifting conversation threads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleScroll();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [activeConversationId, activeMessages.length]);
 
   // Auto-scroll to bottom of conversation - Throttled and optimized for performance
   useEffect(() => {
@@ -86,34 +117,56 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ onOpenSettings }) => {
   }
 
   return (
-    <div 
-      ref={chatContainerRef}
-      id="chat-scroll-wrapper"
-      className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 scroll-smooth w-full bg-transparent"
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Suspense fallback={
-          <div className="w-full flex justify-center py-6">
-            <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-          </div>
-        }>
-          {activeMessages.map((message) => {
-            const parentId = message.parentId;
-            const parentMsg = parentId && activeConversation ? activeConversation.messages[parentId] : null;
-            const branchSiblings = parentMsg ? (parentMsg.branchIds || []) : [];
-            return (
-              <MessageBubble 
-                key={message.id} 
-                message={message} 
-                branchSiblings={branchSiblings} 
-              />
-            );
-          })}
-        </Suspense>
+    <div className="flex-1 flex flex-col relative overflow-hidden min-h-0">
+      <div 
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+        id="chat-scroll-wrapper"
+        className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 scroll-smooth w-full bg-transparent"
+      >
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Suspense fallback={
+            <div className="w-full flex justify-center py-6">
+              <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          }>
+            {activeMessages.map((message) => {
+              const parentId = message.parentId;
+              const parentMsg = parentId && activeConversation ? activeConversation.messages[parentId] : null;
+              const branchSiblings = parentMsg ? (parentMsg.branchIds || []) : [];
+              return (
+                <MessageBubble 
+                  key={message.id} 
+                  message={message} 
+                  branchSiblings={branchSiblings} 
+                />
+              );
+            })}
+          </Suspense>
 
-        {/* Floating spacer to aid scroll anchors */}
-        <div ref={bottomSpacerRef} className="h-4" />
+          {/* Floating spacer to aid scroll anchors */}
+          <div ref={bottomSpacerRef} className="h-4" />
+        </div>
       </div>
+
+      <AnimatePresence>
+        {showScrollButton && (
+          <motion.button
+            id="chat-scroll-to-bottom-btn"
+            initial={{ opacity: 0, y: 12, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.9 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            onClick={scrollToBottom}
+            className="absolute bottom-6 right-6 md:right-8 z-30 flex items-center justify-center p-3 rounded-full bg-zinc-950/80 backdrop-blur-md border border-white/10 text-[#EDEDED] shadow-2xl hover:bg-zinc-900 hover:border-white/20 active:scale-95 transition-all group cursor-pointer"
+          >
+            <ChevronDown size={18} className="group-hover:translate-y-0.5 transition-transform duration-200" />
+            <span className="text-xs font-medium max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 ease-out whitespace-nowrap">
+              Scroll to bottom
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

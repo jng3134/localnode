@@ -17,7 +17,10 @@ import {
   Sparkles,
   Layers,
   Trash,
-  Menu
+  Menu,
+  Edit2,
+  Check,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -35,10 +38,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
   const createConversation = useChatStore((state) => state.createConversation);
   const deleteConversation = useChatStore((state) => state.deleteConversation);
   const togglePinConversation = useChatStore((state) => state.togglePinConversation);
+  const renameConversation = useChatStore((state) => state.renameConversation);
   const searchQuery = useChatStore((state) => state.searchQuery);
   const setSearchQuery = useChatStore((state) => state.setSearchQuery);
   const clearAllConversations = useChatStore((state) => state.clearAllConversations);
   const activeProviderId = useChatStore((state) => state.settings.activeProviderId);
+
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editTitle, setEditTitle] = React.useState('');
 
   const handleNewChat = () => {
     createConversation();
@@ -123,8 +130,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
             ) : (
               <>
                 <div className="text-[10px] uppercase tracking-widest text-[#9ac1dc] font-bold mb-3 px-2">Threads</div>
-                {filteredConversations.map((c) => {
+                 {filteredConversations.map((c) => {
                   const isActive = activeConversationId === c.id;
+                  const isEditing = editingId === c.id;
+
+                  const handleSave = () => {
+                    if (editTitle.trim()) {
+                      renameConversation(c.id, editTitle.trim());
+                    }
+                    setEditingId(null);
+                  };
+
+                  const handleCancel = () => {
+                    setEditingId(null);
+                  };
+
+                  const startEdit = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setEditingId(c.id);
+                    setEditTitle(c.title);
+                  };
+
                   return (
                     <div
                       key={c.id}
@@ -134,46 +160,94 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                           ? 'bg-indigo-500/15 border-indigo-500/30' 
                           : 'hover:bg-white/[0.04] border-transparent'
                       }`}
-                      onClick={() => setActiveConversationId(c.id)}
+                      onClick={() => !isEditing && setActiveConversationId(c.id)}
                     >
-                      <div className="flex items-center gap-3 overflow-hidden w-[78%]">
+                      <div className="flex items-center gap-3 overflow-hidden w-[78%]" onDoubleClick={(e) => startEdit(e)}>
                         {isActive ? (
                           <div className="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.7)] flex-shrink-0"></div>
                         ) : (
                           <div className="w-2 h-2 rounded-full bg-zinc-650 flex-shrink-0 group-hover:bg-zinc-400 transition-colors"></div>
                         )}
-                        <span className={`text-[13px] truncate select-none leading-relaxed font-sans ${
-                          isActive 
-                            ? 'text-[#EDEDED] font-medium' 
-                            : 'text-zinc-300 group-hover:text-zinc-100'
-                        }`}>
-                          {c.title}
-                        </span>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onBlur={handleSave}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSave();
+                              if (e.key === 'Escape') handleCancel();
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            className="bg-zinc-900 border border-indigo-500/50 rounded-md px-1.5 py-0.5 text-[13px] text-[#EDEDED] focus:outline-none w-full focus:ring-1 focus:ring-indigo-500/30"
+                          />
+                        ) : (
+                          <span className={`text-[13px] truncate select-none leading-relaxed font-sans ${
+                            isActive 
+                              ? 'text-[#EDEDED] font-medium' 
+                              : 'text-zinc-300 group-hover:text-zinc-100'
+                          }`}>
+                            {c.title}
+                          </span>
+                        )}
                       </div>
 
-                      {/* Action buttons (Pin & Delete) */}
-                      <div className="flex-shrink-0 flex items-center lg:opacity-0 group-hover:opacity-100 gap-1 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            togglePinConversation(c.id);
-                          }}
-                          title={c.pinned ? 'Unpin' : 'Pin thread'}
-                          className={`p-1 rounded text-zinc-400 hover:text-[#EDEDED] cursor-pointer hover:bg-white/10 transition ${c.pinned ? 'text-indigo-400 opacity-100' : ''}`}
-                        >
-                          <Pin size={10} fill={c.pinned ? 'currentColor' : 'none'} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteConversation(c.id);
-                          }}
-                          title="Delete thread"
-                          className="p-1 rounded text-zinc-400 cursor-pointer hover:bg-white/10 hover:text-rose-455 transition"
-                        >
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
+                      {/* Action buttons (Rename, Pin & Delete) */}
+                      {isEditing ? (
+                        <div className="flex-shrink-0 flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSave();
+                            }}
+                            title="Save title"
+                            className="p-1 rounded text-emerald-400 hover:bg-emerald-500/10 cursor-pointer transition"
+                          >
+                            <Check size={11} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancel();
+                            }}
+                            title="Cancel edit"
+                            className="p-1 rounded text-zinc-400 hover:bg-white/10 cursor-pointer transition"
+                          >
+                            <X size={11} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex-shrink-0 flex items-center lg:opacity-0 group-hover:opacity-100 gap-1 transition-opacity">
+                          <button
+                            onClick={(e) => startEdit(e)}
+                            title="Rename thread"
+                            className="p-1 rounded text-zinc-400 hover:text-[#EDEDED] cursor-pointer hover:bg-white/10 transition"
+                          >
+                            <Edit2 size={10} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePinConversation(c.id);
+                            }}
+                            title={c.pinned ? 'Unpin' : 'Pin thread'}
+                            className={`p-1 rounded text-zinc-400 hover:text-[#EDEDED] cursor-pointer hover:bg-white/10 transition ${c.pinned ? 'text-indigo-400 opacity-100' : ''}`}
+                          >
+                            <Pin size={10} fill={c.pinned ? 'currentColor' : 'none'} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(c.id);
+                            }}
+                            title="Delete thread"
+                            className="p-1 rounded text-zinc-400 cursor-pointer hover:bg-white/10 hover:text-rose-455 transition"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

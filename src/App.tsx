@@ -18,7 +18,8 @@ import {
   Plus, 
   ShieldAlert, 
   Database,
-  Grid
+  Grid,
+  Edit2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -35,6 +36,7 @@ export default function App() {
 
   const fetchModels = useChatStore((state) => state.fetchModels);
   const createConversation = useChatStore((state) => state.createConversation);
+  const renameConversation = useChatStore((state) => state.renameConversation);
   const setTheme = useChatStore((state) => state.setTheme);
 
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -42,6 +44,15 @@ export default function App() {
     return true;
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [headerEditing, setHeaderEditing] = useState(false);
+  const [headerTitle, setHeaderTitle] = useState('');
+
+  // Synchronize title selection state when not editing
+  useEffect(() => {
+    if (!headerEditing) {
+      setHeaderTitle(activeConversationTitle || '');
+    }
+  }, [activeConversationTitle, headerEditing]);
 
   // Load models on initial loading
   useEffect(() => {
@@ -98,9 +109,51 @@ export default function App() {
             {/* Conversation active details */}
             <div className="flex flex-col border-l border-white/10 pl-5 hidden sm:flex">
               <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest font-sans">Active Thread</span>
-              <span className="font-medium text-sm text-[#EDEDED] line-clamp-1 truncate max-w-[150px] lg:max-w-[300px]">
-                {activeConversationTitle || 'New Prompt'}
-              </span>
+              {headerEditing ? (
+                <input
+                  type="text"
+                  value={headerTitle}
+                  onChange={(e) => setHeaderTitle(e.target.value)}
+                  onBlur={() => {
+                    if (headerTitle.trim() && activeConversationId) {
+                      renameConversation(activeConversationId, headerTitle.trim());
+                    }
+                    setHeaderEditing(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (headerTitle.trim() && activeConversationId) {
+                        renameConversation(activeConversationId, headerTitle.trim());
+                      }
+                      setHeaderEditing(false);
+                    }
+                    if (e.key === 'Escape') {
+                      setHeaderTitle(activeConversationTitle || '');
+                      setHeaderEditing(false);
+                    }
+                  }}
+                  autoFocus
+                  className="bg-zinc-900/80 border border-indigo-500/50 rounded-md px-1.5 py-0.5 text-xs text-white focus:outline-none w-48 mt-0.5 focus:ring-1 focus:ring-indigo-500/30"
+                />
+              ) : (
+                <div 
+                  onClick={() => {
+                    if (activeConversationId) {
+                      setHeaderTitle(activeConversationTitle || '');
+                      setHeaderEditing(true);
+                    }
+                  }}
+                  title={activeConversationId ? "Click to rename active thread" : undefined}
+                  className={`group flex items-center gap-1.5 px-1 rounded transition mt-0.5 ${activeConversationId ? 'cursor-pointer hover:bg-white/5' : ''}`}
+                >
+                  <span className="font-medium text-sm text-[#EDEDED] line-clamp-1 truncate max-w-[150px] lg:max-w-[300px]">
+                    {activeConversationTitle || 'New Prompt'}
+                  </span>
+                  {activeConversationId && (
+                    <Edit2 size={11} className="text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Active Model Indicator Badge */}
