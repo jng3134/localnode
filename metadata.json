@@ -1,0 +1,6 @@
+{
+  "name": "Local AI Chat Studio",
+  "description": "A refined, high-performance chat interface and model management dashboard optimized for connecting to Ollama, LM Studio, and OpenAI-compatible local servers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
