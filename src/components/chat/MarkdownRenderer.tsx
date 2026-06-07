@@ -11,6 +11,9 @@ import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 import { Copy, Check, Terminal } from 'lucide-react';
 
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 interface CodeBlockProps {
   language: string;
   value: string;
@@ -30,8 +33,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) =>
   };
 
   return (
-    <div className="my-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-zinc-200 shadow-lg font-mono text-sm max-w-full">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-zinc-900/50 text-xs text-zinc-400 font-sans tracking-wide">
+    <div className="my-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-[#1e1e1e] shadow-lg font-mono text-sm max-w-full">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-[#2d2d2d] text-xs text-zinc-400 font-sans tracking-wide">
         <div className="flex items-center gap-2 font-mono text-[11px] uppercase">
           <Terminal size={14} className="text-emerald-400" />
           <span>{language || 'code'}</span>
@@ -54,10 +57,22 @@ export const CodeBlock: React.FC<CodeBlockProps> = memo(({ language, value }) =>
           )}
         </button>
       </div>
-      <div className="p-4 overflow-x-auto select-text scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
-        <pre className="text-zinc-200 text-xs md:text-sm font-mono leading-relaxed bg-transparent whitespace-pre">
+      <div className="overflow-x-auto select-text">
+        <SyntaxHighlighter
+          language={language.toLowerCase()}
+          style={vscDarkPlus}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            background: 'transparent',
+            fontSize: '0.875rem',
+            lineHeight: '1.5',
+          }}
+          wrapLines={true}
+          wrapLongLines={false}
+        >
           {value}
-        </pre>
+        </SyntaxHighlighter>
       </div>
     </div>
   );

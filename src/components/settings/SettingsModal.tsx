@@ -9,7 +9,7 @@ import { ProviderConfig, AppSettings } from '../../types';
 import { 
   X, 
   Database, 
-  Sliders, 
+  Settings2, 
   Download, 
   Upload, 
   HelpCircle, 
@@ -19,7 +19,7 @@ import {
   RefreshCw, 
   Network 
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -44,11 +44,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  // Trigger model fetch when switching provider
   const handleProviderSelect = (providerId: string) => {
     updateSettings({ 
       activeProviderId: providerId as any,
-      activeModelId: null // Reset to let fetchModels default it
+      activeModelId: null 
     });
   };
 
@@ -72,12 +71,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     'llama-cpp'
   ];
 
-  // Manual Trigger to refresh model tags
   const handleRefreshModels = async () => {
     await fetchModels();
   };
 
-  // Safe Backups dynamic exporter
   const handleExportBackup = () => {
     try {
       const content = JSON.stringify(conversations, null, 2);
@@ -94,7 +91,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   };
 
-  // Safe Backups uploader import
   const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -115,124 +111,126 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Heavy Backdrop */}
-      <div 
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         onClick={onClose}
         id="settings-backdrop-overlay"
-        className="absolute inset-0 bg-[#0A0A0A]/85 backdrop-blur-md cursor-pointer"
+        className="absolute inset-0 bg-[#030014]/60 backdrop-blur-xl cursor-pointer"
       />
 
-      {/* Styled Card Modal Container */}
+      {/* Styled Glass Card Modal Container */}
       <motion.div
-        initial={{ scale: 0.98, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.98, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="relative bg-[#0F0F0F] border border-[#262626] rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col font-sans shadow-2xl z-10"
+        initial={{ scale: 0.96, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.96, opacity: 0, y: 10 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="relative bg-white/10 backdrop-blur-3xl border border-white/20 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col font-sans shadow-2xl z-10 text-[#EDEDED]"
       >
         {/* Header Block */}
-        <div className="flex items-center justify-between p-6 border-b border-[#262626] bg-[#0F0F0F]">
-          <div className="flex items-center gap-2.5">
-            <Sliders size={20} className="text-orange-500" />
-            <h2 className="text-lg font-semibold text-white tracking-tight">
+        <div className="flex items-center justify-between p-6 border-b border-white/[0.08] bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
+              <Settings2 size={20} className="text-indigo-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-white tracking-tight">
               Studio Configuration
             </h2>
           </div>
           <button
             onClick={onClose}
             id="settings-close-btn"
-            className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 cursor-pointer transition"
+            className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 cursor-pointer transition border border-transparent hover:border-white/10"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Tab Selection rail bar */}
-        <div className="flex border-b border-[#262626] bg-[#0A0A0A] text-xs px-4">
-          <button
-            onClick={() => setActiveTab('providers')}
-            className={`px-4 py-3.5 border-b-2 font-semibold transition cursor-pointer uppercase tracking-widest text-[9px] ${
-              activeTab === 'providers'
-                ? 'border-orange-500 text-orange-400 font-bold'
-                : 'border-transparent text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            Providers
-          </button>
-          <button
-            onClick={() => setActiveTab('parameters')}
-            className={`px-4 py-3.5 border-b-2 font-semibold transition cursor-pointer uppercase tracking-widest text-[9px] ${
-              activeTab === 'parameters'
-                ? 'border-orange-500 text-orange-400 font-bold'
-                : 'border-transparent text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            Parameters
-          </button>
-          <button
-            onClick={() => setActiveTab('data')}
-            className={`px-4 py-3.5 border-b-2 font-semibold transition cursor-pointer uppercase tracking-widest text-[9px] ${
-              activeTab === 'data'
-                ? 'border-orange-500 text-orange-400 font-bold'
-                : 'border-transparent text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            Backup & Data
-          </button>
+        <div className="flex border-b border-white/[0.08] bg-white/[0.01] text-xs px-2 sm:px-4 shrink-0 overflow-x-auto invisible-scrollbar">
+          {(['providers', 'parameters', 'data'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-4 font-semibold transition cursor-pointer uppercase tracking-widest text-[10px] relative whitespace-nowrap ${
+                activeTab === tab
+                  ? 'text-indigo-300'
+                  : 'text-white/40 hover:text-white/70'
+              }`}
+            >
+              {tab === 'providers' && 'Providers'}
+              {tab === 'parameters' && 'Parameters'}
+              {tab === 'data' && 'Backup & Data'}
+              {activeTab === tab && (
+                <motion.div 
+                  layoutId="activeTabIndicator"
+                  className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-400 rounded-t-full shadow-[0_0_10px_rgba(129,140,248,0.5)]"
+                />
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Scrollable contents Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 invisible-scrollbar">
           
           {/* TAB 1: PROVIDERS CONNECTIONS */}
           {activeTab === 'providers' && (
-            <div className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] uppercase font-bold text-zinc-550 dark:text-zinc-500 tracking-widest mb-1">
-                  Select Engine Inference Engine
+            <div className="space-y-6">
+              <div className="flex flex-col gap-2.5">
+                <span className="text-[10px] uppercase font-bold text-indigo-300/80 tracking-widest pl-1">
+                  Active Inference Engine
                 </span>
                 <select
                   value={settings.activeProviderId}
                   onChange={(e) => handleProviderSelect(e.target.value)}
                   id="settings-active-provider-select"
-                  className="w-full text-xs px-4 py-3 bg-[#161616] rounded-xl border border-[#262626] text-white focus:outline-none focus:border-[#444] cursor-pointer"
+                  className="w-full text-sm px-4 py-3.5 bg-white/5 hover:bg-white/[0.07] transition-colors rounded-2xl border border-white/10 text-white focus:outline-none focus:border-indigo-500/50 cursor-pointer appearance-none"
                 >
-                  <option value="gemini">Google Gemini Cloud (Recommended default)</option>
-                  <option value="ollama">Ollama Service (Localhost wait)</option>
-                  <option value="lm-studio">LM Studio Orchestrator</option>
-                  <option value="openai-compatible">OpenAI Compatible Custom Endpoints</option>
-                  <option value="llama-cpp">llama.cpp Engine Server</option>
+                  <option value="gemini" className="bg-[#1a1136]">Google Gemini Cloud (Recommended)</option>
+                  <option value="ollama" className="bg-[#1a1136]">Ollama Service (Localhost)</option>
+                  <option value="lm-studio" className="bg-[#1a1136]">LM Studio Orchestrator</option>
+                  <option value="openai-compatible" className="bg-[#1a1136]">OpenAI Compatible Endpoints</option>
+                  <option value="llama-cpp" className="bg-[#1a1136]">llama.cpp Engine Server</option>
                 </select>
               </div>
 
               {/* Provider details configuration drawer */}
-              <div className="border-t border-[#262626] pt-5 space-y-4">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest block">
-                  Configure Individual Engines and Endpoints
+              <div className="pt-2 space-y-4">
+                <span className="text-[10px] uppercase font-bold text-indigo-300/80 tracking-widest pl-1 block mb-3">
+                  Endpoint Configurations
                 </span>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {providerIds.map((providerId) => {
                     const prov = settings.providerConfigs[providerId];
                     if (!prov) return null;
 
                     const isCloud = prov.isCloud;
+                    const isActive = settings.activeProviderId === providerId;
 
                     return (
                       <div 
                         key={providerId}
-                        className={`p-5 rounded-2xl border transition-all ${
-                          settings.activeProviderId === providerId
-                            ? 'border-orange-500/30 bg-[#161616]'
-                            : 'border-[#262626]/70 bg-[#0A0A0A]/45 hover:border-[#333]'
+                        className={`p-5 rounded-2xl border transition-all duration-300 ${
+                          isActive
+                            ? 'border-indigo-500/40 bg-indigo-500/5 shadow-[0_0_30px_rgba(99,102,241,0.05)]'
+                            : 'border-white/10 bg-white/[0.02] hover:border-white/20'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Network size={14} className={settings.activeProviderId === providerId ? "text-orange-500" : "text-zinc-500"} />
-                            <span className="font-semibold text-xs md:text-sm text-zinc-100 uppercase tracking-wide">
-                              {prov.name} {isCloud && <span className="ml-1 text-[8px] px-2 py-0.5 select-none font-bold uppercase text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-full">Cloud</span>}
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-1.5 rounded-lg border ${isActive ? 'bg-indigo-500/20 border-indigo-500/30' : 'bg-white/5 border-white/10'}`}>
+                              <Network size={14} className={isActive ? "text-indigo-400" : "text-white/50"} />
+                            </div>
+                            <span className="font-semibold text-sm text-white tracking-wide flex items-center gap-2">
+                              {prov.name} 
+                              {isCloud && (
+                                <span className="text-[9px] px-2 py-0.5 select-none font-bold uppercase text-indigo-200 bg-indigo-500/20 border border-indigo-500/30 rounded-full">Cloud</span>
+                              )}
                             </span>
                           </div>
 
@@ -243,61 +241,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                               onChange={(e) => updateProviderConfig(providerId, { enabled: e.target.checked })}
                               className="sr-only peer"
                             />
-                            <div className="w-8 h-4.5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#1F1F1F] after:content-[''] after:absolute after:top-[2.5px] after:left-[2.5px] after:bg-zinc-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-orange-500 peer-checked:after:bg-white" />
-                            <span className="ml-1.5 text-[9px] uppercase tracking-wider font-bold text-zinc-500">
-                              {prov.enabled ? 'On' : 'Off'}
-                            </span>
+                            <div className="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white/50 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:after:bg-white border border-white/10 peer-checked:border-indigo-500 shadow-inner" />
                           </label>
                         </div>
 
                         {/* Input configurations for URLs/API Keys if enabled */}
-                        {prov.enabled && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1.5">
-                            {/* Connection URL Input */}
-                            {providerId !== 'gemini' && (
-                              <div className="flex flex-col gap-1.5">
-                                <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold">Service Endpoint URL</span>
-                                <input
-                                  type="text"
-                                  value={prov.url}
-                                  onChange={(e) => updateProviderConfig(providerId, { url: e.target.value })}
-                                  placeholder="http://localhost:..."
-                                  className="text-xs px-3.5 py-2.5 bg-[#0D0D0D] font-mono rounded-lg border border-[#262626] text-zinc-105 focus:outline-none focus:border-[#444]"
-                                />
-                              </div>
-                            )}
+                        <AnimatePresence>
+                          {prov.enabled && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Connection URL Input */}
+                                {providerId !== 'gemini' && (
+                                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                                    <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold pl-1">Server URL</span>
+                                    <input
+                                      type="text"
+                                      value={prov.url}
+                                      onChange={(e) => updateProviderConfig(providerId, { url: e.target.value })}
+                                      placeholder="http://localhost:..."
+                                      className="text-sm px-4 py-3 bg-white/5 font-mono rounded-xl border border-white/10 text-white/80 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all placeholder:text-white/20"
+                                    />
+                                  </div>
+                                )}
 
-                            {/* Optional auth credentials config */}
-                            {providerId === 'openai-compatible' && (
-                              <div className="flex flex-col gap-1.5 relative">
-                                <span className="text-[9px] text-zinc-550 uppercase tracking-wider font-bold">API Bearer Token (Optional)</span>
-                                <div className="relative">
-                                  <input
-                                    type={showApiKey[providerId] ? 'text' : 'password'}
-                                    value={prov.apiKey || ''}
-                                    onChange={(e) => updateProviderConfig(providerId, { apiKey: e.target.value })}
-                                    placeholder="sk-..."
-                                    className="text-xs px-3.5 py-2.5 pr-9 w-full bg-[#0D0D0D] font-mono rounded-lg border border-[#262626] text-zinc-105 focus:outline-none focus:border-[#444]"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleApiKey(providerId)}
-                                    className="absolute right-3 top-3 text-zinc-550 hover:text-white cursor-pointer"
-                                  >
-                                    {showApiKey[providerId] ? <EyeOff size={11} /> : <Eye size={11} />}
-                                  </button>
-                                </div>
-                              </div>
-                            )}
+                                {/* Optional auth credentials config */}
+                                {providerId === 'openai-compatible' && (
+                                  <div className="flex flex-col gap-1.5 relative md:col-span-2">
+                                    <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold pl-1">Bearer Token (Optional)</span>
+                                    <div className="relative">
+                                      <input
+                                        type={showApiKey[providerId] ? 'text' : 'password'}
+                                        value={prov.apiKey || ''}
+                                        onChange={(e) => updateProviderConfig(providerId, { apiKey: e.target.value })}
+                                        placeholder="sk-..."
+                                        className="text-sm px-4 py-3 pr-10 w-full bg-white/5 font-mono rounded-xl border border-white/10 text-white/80 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all placeholder:text-white/20"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleApiKey(providerId)}
+                                        className="absolute right-3 top-3 text-white/40 hover:text-white/80 cursor-pointer p-1 rounded-md transition-colors"
+                                      >
+                                        {showApiKey[providerId] ? <EyeOff size={14} /> : <Eye size={14} />}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
 
-                            {/* Gemini Specific metadata details */}
-                            {providerId === 'gemini' && (
-                              <div className="col-span-1 md:col-span-2 text-xs text-zinc-400 bg-[#0A0A0A]/85 p-4 rounded-xl border border-[#262626] leading-relaxed font-sans">
-                                ✦ <b className="text-zinc-200">Keys are securely loaded server-side</b>. No manual setup is needed. You can update or rotate the secret `GEMINI_API_KEY` in the <b>Settings &gt; Secrets</b> tab of AI Studio anytime.
+                                {/* Gemini Specific metadata details */}
+                                {providerId === 'gemini' && (
+                                  <div className="col-span-1 md:col-span-2 text-xs text-white/60 bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 leading-relaxed font-sans shadow-inner">
+                                    ✦ <b className="text-indigo-200">Keys are securely loaded server-side</b>. No manual setup is needed. You can update or rotate the secret <code className="bg-black/30 px-1 py-0.5 rounded border border-white/10 text-indigo-300">GEMINI_API_KEY</code> in the <b>Settings &gt; Secrets</b> tab of AI Studio anytime.
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     );
                   })}
@@ -308,43 +312,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* TAB 2: SYSTEM PARAMETERS */}
           {activeTab === 'parameters' && (
-            <div className="space-y-5">
-              <div className="flex flex-col gap-1 border-b border-[#262626] pb-4">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest block mb-2">
-                  Model Status check
+            <div className="space-y-8">
+              <div className="flex flex-col gap-4 border-b border-white/10 pb-6">
+                <span className="text-[10px] uppercase font-bold text-indigo-300/80 tracking-widest pl-1">
+                  Model Synchronization
                 </span>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="text-xs text-zinc-500">
+                
+                <div className="flex items-center justify-between gap-4 bg-white/5 border border-white/10 p-3.5 rounded-2xl">
+                  <div className="text-sm text-white/70 font-medium">
                     {isLoadingModels ? (
-                      <span className="flex items-center gap-2 font-mono"><RefreshCw size={12} className="animate-spin text-orange-500" /> Connecting to inference endpoint...</span>
+                      <span className="flex items-center gap-2 font-mono text-indigo-300"><RefreshCw size={14} className="animate-spin" /> Fetching payload...</span>
                     ) : modelsError ? (
-                      <span className="text-rose-500 font-semibold">{modelsError}</span>
+                      <span className="text-rose-400 font-semibold">{modelsError}</span>
                     ) : (
-                      <span className="text-orange-400 font-mono border border-orange-500/20 bg-orange-500/5 px-2.5 py-1 rounded-full text-[9px] uppercase tracking-wider font-bold">{models.length} active models connected successfully.</span>
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-2 w-2 relative">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        {models.length} active models available
+                      </span>
                     )}
                   </div>
                   <button
                     onClick={handleRefreshModels}
                     id="btn-refresh-models-list"
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-[#262626] bg-[#161616] font-bold text-[10px] uppercase tracking-wider text-zinc-350 hover:text-white cursor-pointer transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 font-bold text-[10px] uppercase tracking-wider text-white rounded-xl cursor-pointer transition-all shadow-sm"
                   >
                     <RefreshCw size={12} className={isLoadingModels ? 'animate-spin' : ''} />
-                    <span>Synchronize Tags</span>
+                    <span>Sync</span>
                   </button>
                 </div>
 
-                {/* Model selector drop option explicitly shown */}
+                {/* Model selector drop option */}
                 {models.length > 0 && (
-                  <div className="mt-3.5 flex flex-col gap-1.5">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Inference Model</span>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <span className="text-[10px] text-white/50 uppercase tracking-widest font-bold pl-1">Inference Model</span>
                     <select
                       value={settings.activeModelId || ''}
                       onChange={(e) => updateSettings({ activeModelId: e.target.value })}
                       id="settings-active-model-select"
-                      className="w-full text-xs px-3 py-2.5 bg-[#161616] rounded-lg border border-[#262626] text-white focus:outline-none"
+                      className="w-full text-sm px-4 py-3 bg-white/5 hover:bg-white/[0.07] rounded-xl border border-white/10 text-white focus:outline-none focus:border-indigo-500/50 appearance-none cursor-pointer transition-all"
                     >
                       {models.map(m => (
-                        <option key={m.id} value={m.id}>
+                        <option key={m.id} value={m.id} className="bg-[#1a1136]">
                           {m.name} ({m.provider.toUpperCase()})
                         </option>
                       ))}
@@ -354,12 +365,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
 
               {/* Slider variables */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 {/* Temperature */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between text-[11px] uppercase tracking-wider font-bold">
-                    <span className="text-zinc-400">Temperature</span>
-                    <span className="font-mono text-orange-450">{settings.temperature.toFixed(2)}</span>
+                    <span className="text-white/60">Temperature</span>
+                    <span className="font-mono text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{settings.temperature.toFixed(2)}</span>
                   </div>
                   <input
                     type="range"
@@ -368,18 +379,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     step="0.05"
                     value={settings.temperature}
                     onChange={(e) => updateSettings({ temperature: parseFloat(e.target.value) })}
-                    className="w-full h-1 bg-[#262626] rounded-lg appearance-none cursor-pointer accent-orange-500"
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-400"
                   />
-                  <span className="block text-[10px] text-zinc-500 leading-relaxed font-sans">
+                  <span className="block text-xs text-white/40 leading-relaxed font-sans">
                     Higher values make outputs more creative, lower values make responses direct and factual.
                   </span>
                 </div>
 
                 {/* Top P */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between text-[11px] uppercase tracking-wider font-bold">
-                    <span className="text-zinc-400">Top-p Nucleus</span>
-                    <span className="font-mono text-orange-450">{settings.topP.toFixed(2)}</span>
+                    <span className="text-white/60">Top-p Nucleus</span>
+                    <span className="font-mono text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{settings.topP.toFixed(2)}</span>
                   </div>
                   <input
                     type="range"
@@ -388,18 +399,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     step="0.05"
                     value={settings.topP}
                     onChange={(e) => updateSettings({ topP: parseFloat(e.target.value) })}
-                    className="w-full h-1 bg-[#262626] rounded-lg appearance-none cursor-pointer accent-orange-500"
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-400"
                   />
-                  <span className="block text-[10px] text-zinc-500 leading-relaxed font-sans">
+                  <span className="block text-xs text-white/40 leading-relaxed font-sans">
                     Controls cumulative token boundaries. 1.0 selects across all possible variations.
                   </span>
                 </div>
 
                 {/* Max Tokens */}
-                <div className="grid grid-cols-1 gap-2 md:col-span-2 mt-2">
+                <div className="grid grid-cols-1 gap-3 md:col-span-2 pt-2">
                   <div className="flex items-center justify-between text-[11px] uppercase tracking-wider font-bold">
-                    <span className="text-zinc-400">Max tokens boundary</span>
-                    <span className="font-mono text-orange-455">{settings.maxTokens}</span>
+                    <span className="text-white/60">Max Extension Tokens</span>
+                    <span className="font-mono text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{settings.maxTokens}</span>
                   </div>
                   <input
                     type="range"
@@ -408,22 +419,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     step="128"
                     value={settings.maxTokens}
                     onChange={(e) => updateSettings({ maxTokens: parseInt(e.target.value) })}
-                    className="w-full h-1 bg-[#262626] rounded-lg appearance-none cursor-pointer accent-orange-500"
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-400"
                   />
                 </div>
               </div>
 
               {/* System Instruction edit area */}
-              <div className="flex flex-col gap-2 pt-2 border-t border-[#262626]">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest block mb-1">
-                  Global System Prompt override
+              <div className="flex flex-col gap-3 pt-6 border-t border-white/10">
+                <span className="text-[10px] uppercase font-bold text-indigo-300/80 tracking-widest pl-1">
+                  Global System Directives
                 </span>
                 <textarea
                   value={settings.systemPrompt}
                   onChange={(e) => updateSettings({ systemPrompt: e.target.value })}
                   rows={4}
                   id="settings-system-prompt-box"
-                  className="w-full text-xs font-sans px-3.5 py-2.5 rounded-xl border border-[#262626] bg-[#161616] text-[#EDEDED] focus:outline-none"
+                  className="w-full text-sm font-sans px-4 py-3.5 rounded-2xl border border-white/10 bg-white/5 text-white/90 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all placeholder:text-white/20 resize-y"
                   placeholder="Insert custom assistant instructions..."
                 />
               </div>
@@ -432,42 +443,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
           {/* TAB 3: BACKUP AND DATA MANAGER */}
           {activeTab === 'data' && (
-            <div className="space-y-6">
-              <div className="p-5 rounded-2xl border border-[#262626] bg-[#161616] flex items-center justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold text-xs md:text-sm text-zinc-100 flex items-center gap-2 uppercase tracking-wide">
-                    <Database size={15} className="text-orange-500" />
-                    <span>Database Backup exporter</span>
+            <div className="space-y-4">
+              <div className="p-6 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-5 group">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-semibold text-sm text-white flex items-center gap-2 uppercase tracking-wide">
+                    <div className="p-1.5 bg-indigo-500/20 rounded-md border border-indigo-500/30 text-indigo-400">
+                      <Database size={14} />
+                    </div>
+                    <span>Export Data Library</span>
                   </span>
-                  <p className="text-[11px] text-zinc-400">
-                    Back up all historical conversation logs and structures locally into a custom JSON download payload.
+                  <p className="text-xs text-white/50 leading-relaxed max-w-md">
+                    Back up all historical conversation logs, tool calls, and references locally into a custom JSON package.
                   </p>
                 </div>
                 <button
                   onClick={handleExportBackup}
                   id="btn-settings-export-backup"
-                  className="flex items-center gap-1.5 px-3 py-2.5 bg-[#262626] hover:bg-[#333] text-zinc-100 font-bold tracking-wider text-[10px] uppercase rounded-xl cursor-pointer transition shrink-0"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 font-bold tracking-wider text-[10px] uppercase rounded-xl cursor-pointer transition shrink-0 shadow-sm"
                 >
-                  <Download size={13} />
-                  <span>Generate Export</span>
+                  <Download size={14} />
+                  <span>Generate Backup</span>
                 </button>
               </div>
 
               {/* Imports backups logs */}
-              <div className="p-5 rounded-2xl border border-[#262626] bg-[#161616] flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-semibold text-xs md:text-sm text-zinc-100 flex items-center gap-2 uppercase tracking-wide">
-                    <Upload size={15} className="text-orange-500" />
-                    <span>Database Backup importer</span>
+              <div className="p-6 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-5 group">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-semibold text-sm text-white flex items-center gap-2 uppercase tracking-wide">
+                    <div className="p-1.5 bg-emerald-500/20 rounded-md border border-emerald-500/30 text-emerald-400">
+                      <Upload size={14} />
+                    </div>
+                    <span>Restore Library</span>
                   </span>
-                  <p className="text-[11px] text-zinc-400 font-sans">
-                    Restore previously exported studio conversations. Importing maps logs directly into your browser's persistent registry.
+                  <p className="text-xs text-white/50 leading-relaxed max-w-md">
+                    Restore previously exported studio conversations. Importing parses logs directly into your browser's persistent registry.
                   </p>
                 </div>
                 
-                <div className="flex-shrink-0 flex items-center gap-2">
-                  <label className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#262626] bg-[#0A0A0A] text-zinc-300 font-bold text-[10px] uppercase tracking-wider cursor-pointer hover:bg-[#161616] transition">
-                    <Upload size={13} />
+                <div className="flex-shrink-0 flex items-center gap-3">
+                  <label className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-bold text-[10px] uppercase tracking-wider cursor-pointer transition shadow-sm">
+                    <Upload size={14} />
                     <span>Upload JSON</span>
                     <input
                       type="file"
@@ -477,27 +492,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     />
                   </label>
                   
-                  {importStatus === 'success' && (
-                    <span className="text-[11px] font-semibold text-orange-400 flex items-center gap-1 animate-pulse">
-                      <Check size={12} />
-                      <span>Restored!</span>
-                    </span>
-                  )}
-                  {importStatus === 'error' && (
-                    <span className="text-[11px] font-semibold text-rose-500">Mismatched schema formats.</span>
-                  )}
+                  <AnimatePresence>
+                    {importStatus === 'success' && (
+                      <motion.span 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-md"
+                      >
+                        <Check size={12} />
+                        Restored
+                      </motion.span>
+                    )}
+                    {importStatus === 'error' && (
+                      <motion.span 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md"
+                      >
+                        Format mismatch
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
               {/* Direct visual chat-md individual exporter */}
               {Object.keys(conversations).length > 0 && (
-                <div className="border-t border-[#262626] pt-5 space-y-4">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest block">
-                    Individual active conversation backup
+                <div className="pt-6 mt-2">
+                  <span className="text-[10px] uppercase font-bold text-indigo-300/80 tracking-widest pl-1 block mb-3">
+                    Active Thread Export
                   </span>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-[#262626] bg-[#161616] text-xs gap-3">
-                    <span className="text-zinc-400 font-sans">Export active conversation as formatted document:</span>
-                    <div className="flex items-center gap-2 font-mono">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-white/10 bg-white/5 gap-4">
+                    <span className="text-white/60 text-sm font-medium">Export the currently focused thread:</span>
+                    <div className="flex items-center gap-2 font-mono w-full sm:w-auto">
                       <button
                         onClick={() => {
                           const resExp = exportActiveChat('markdown');
@@ -511,9 +540,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             alert('No active chat context to export.');
                           }
                         }}
-                        className="px-3.5 py-2.5 bg-[#0D0D0D] border border-[#262626] hover:bg-[#262626] rounded-lg tracking-wider text-zinc-300 hover:text-white cursor-pointer uppercase font-bold text-[10px]"
+                        className="flex-1 sm:flex-none px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl tracking-wider text-white cursor-pointer uppercase font-bold text-[10px] transition-colors text-center"
                       >
-                        Markdown (.md)
+                        MD
                       </button>
                       <button
                         onClick={() => {
@@ -528,9 +557,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             alert('No active chat context.');
                           }
                         }}
-                        className="px-3.5 py-2.5 bg-[#0D0D0D] border border-[#262626] hover:bg-[#262626] rounded-lg tracking-wider text-zinc-300 hover:text-white cursor-pointer uppercase font-bold text-[10px]"
+                        className="flex-1 sm:flex-none px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl tracking-wider text-white cursor-pointer uppercase font-bold text-[10px] transition-colors text-center"
                       >
-                        JSON Format
+                        JSON
                       </button>
                     </div>
                   </div>
@@ -541,16 +570,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </div>
 
         {/* Footer actions */}
-        <div className="p-5 border-t border-[#262626] flex items-center justify-between bg-[#0A0A0A] text-xs text-zinc-500 px-6 shrink-0">
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
-            <HelpCircle size={12} className="text-zinc-500" />
-            <span>Settings automatically persisted inside cache-side layers.</span>
+        <div className="p-5 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between bg-white/[0.02] gap-4 shrink-0">
+          <div className="flex items-center gap-2 text-[11px] text-white/40">
+            <HelpCircle size={14} className="text-white/30" />
+            <span>Changes are persisted automatically.</span>
           </div>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold uppercase tracking-wider text-[10px] cursor-pointer transition shadow-xl shadow-white/5"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold uppercase tracking-wider text-[11px] cursor-pointer transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_25px_rgba(99,102,241,0.5)] border border-indigo-400/50"
           >
-            Apply Changes
+            Done
           </button>
         </div>
       </motion.div>
