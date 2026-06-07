@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../store/useChatStore';
-import { Send, Square, Sparkles, Terminal, FileText, ChevronDown } from 'lucide-react';
+import { Send, Square, Sparkles, Terminal, FileText, ChevronDown, Cpu, RefreshCw } from 'lucide-react';
 
 interface PromptTemplate {
   name: string;
@@ -21,9 +21,20 @@ const GENERAL_TEMPLATES: PromptTemplate[] = [
 ];
 
 export const ChatInput: React.FC = () => {
-  const { sendMessage, isGeneratingCount, stopGeneration, activeConversationId } = useChatStore();
+  const { 
+    sendMessage, 
+    isGeneratingCount, 
+    stopGeneration, 
+    activeConversationId,
+    settings,
+    models,
+    updateSettings,
+    fetchModels,
+    isLoadingModels
+  } = useChatStore();
   const [input, setInput] = useState('');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showModels, setShowModels] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isGenerating = isGeneratingCount > 0;
@@ -78,40 +89,113 @@ export const ChatInput: React.FC = () => {
   return (
     <div className="relative w-full border border-[#262626] bg-[#161616] rounded-2xl p-4 shadow-xl focus-within:border-[#444] transition-all">
       
-      {/* Template selector line */}
+      {/* Selector Line wrapper */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] pb-3 mb-3">
-        <div className="relative">
-          <button
-            onClick={() => setShowTemplates(!showTemplates)}
-            id="btn-templates-dropdown"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A1A1A] border border-[#262626] text-[10px] uppercase tracking-wider text-zinc-400 hover:text-white cursor-pointer font-semibold font-sans"
-          >
-            <Sparkles size={11} className="text-orange-500" />
-            <span>Templates</span>
-            <ChevronDown size={11} className={`transition-transform duration-150 ${showTemplates ? 'rotate-180' : ''}`} />
-          </button>
+        <div className="flex items-center gap-2">
+          {/* Templates Dropdown Selector wrapper */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowTemplates(!showTemplates);
+                setShowModels(false);
+              }}
+              id="btn-templates-dropdown"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A1A1A] border border-[#262626] text-[10px] uppercase tracking-wider text-zinc-400 hover:text-white cursor-pointer font-semibold font-sans select-none"
+            >
+              <Sparkles size={11} className="text-orange-500" />
+              <span>Templates</span>
+              <ChevronDown size={11} className={`transition-transform duration-150 ${showTemplates ? 'rotate-180' : ''}`} />
+            </button>
 
-          {showTemplates && (
-            <div className="absolute left-0 bottom-full mb-2 z-30 w-72 md:w-80 rounded-xl border border-[#262626] bg-[#161616] shadow-2xl overflow-hidden font-sans p-1">
-              <span className="block px-3 py-1.5 text-[9px] uppercase font-bold tracking-widest text-zinc-500 border-b border-[#262626] mb-1">
-                Select a template
-              </span>
-              <div className="flex flex-col gap-0.5">
-                {GENERAL_TEMPLATES.map((t, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleApplyTemplate(t.prompt)}
-                    className="flex items-center gap-3 w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-[#1A1A1A] rounded-lg cursor-pointer transition-colors"
-                  >
-                    <div className="flex-shrink-0 w-5 h-5 rounded bg-[#262626] flex items-center justify-center">
-                      {t.icon}
-                    </div>
-                    <span className="font-semibold">{t.name}</span>
-                  </button>
-                ))}
+            {showTemplates && (
+              <div className="absolute left-0 bottom-full mb-2 z-30 w-72 md:w-80 rounded-xl border border-[#262626] bg-[#161616] shadow-2xl overflow-hidden font-sans p-1">
+                <span className="block px-3 py-1.5 text-[9px] uppercase font-bold tracking-widest text-zinc-500 border-b border-[#262626] mb-1">
+                  Select a template
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  {GENERAL_TEMPLATES.map((t, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleApplyTemplate(t.prompt)}
+                      className="flex items-center gap-3 w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-[#1A1A1A] rounded-lg cursor-pointer transition-colors"
+                    >
+                      <div className="flex-shrink-0 w-5 h-5 rounded bg-[#262626] flex items-center justify-center">
+                        {t.icon}
+                      </div>
+                      <span className="font-semibold">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Models Shift Dropdown with custom scrollable tags */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowModels(!showModels);
+                setShowTemplates(false);
+              }}
+              id="btn-models-dropdown"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1A1A1A] border border-[#262626] text-[10px] uppercase tracking-wider text-zinc-400 hover:text-white cursor-pointer font-semibold font-sans select-none"
+            >
+              <Cpu size={11} className="text-blue-400" />
+              <span>Model: <b className="text-zinc-250 normal-case">{settings.activeModelId || 'Select Model'}</b></span>
+              <ChevronDown size={11} className={`transition-transform duration-150 ${showModels ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showModels && (
+              <div className="absolute left-0 bottom-full mb-2 z-30 w-72 md:w-80 rounded-xl border border-[#262626] bg-[#161616] shadow-2xl overflow-hidden font-sans p-1">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-[#262626] mb-1.5">
+                  <span className="text-[9px] uppercase font-bold tracking-widest text-zinc-500">
+                    Switch Active Model
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => fetchModels()}
+                    className="text-[9px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors font-semibold uppercase tracking-wider cursor-pointer"
+                  >
+                    <RefreshCw size={9} className={isLoadingModels ? 'animate-spin' : ''} />
+                    <span>Sync</span>
+                  </button>
+                </div>
+                {models.length === 0 ? (
+                  <div className="px-3 py-4 text-xs text-zinc-500 text-center">
+                    No models found for <b className="text-zinc-350">{settings.activeProviderId.toUpperCase()}</b>.
+                    <br />
+                    <span className="text-[10px] text-zinc-600 mt-1.5 block">Configure this provider or endpoint in Settings.</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto scrollbar-thin">
+                    {models.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          updateSettings({ activeModelId: m.id });
+                          setShowModels(false);
+                        }}
+                        className={`flex flex-col text-left px-3 py-2 text-xs rounded-lg cursor-pointer transition-colors ${
+                          settings.activeModelId === m.id
+                            ? 'bg-orange-500/10 text-orange-400 font-medium'
+                            : 'text-zinc-300 hover:bg-[#1A1A1A]'
+                        }`}
+                      >
+                        <span className="font-semibold line-clamp-1">{m.name}</span>
+                        <span className="text-[10px] text-zinc-500 truncate max-w-full">
+                          {m.description || `ID: ${m.id}`}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Dynamic Estimation indicators */}

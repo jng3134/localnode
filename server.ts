@@ -29,7 +29,7 @@ if (geminiApiKey) {
 }
 
 // 1. API: List Gemini Models
-app.get('/api/providers/gemini/models', (req, res) => {
+app.get('/api/providers/gemini/models', async (req, res) => {
   if (!geminiApiKey || !ai) {
     return res.json({
       success: false,
@@ -38,27 +38,39 @@ app.get('/api/providers/gemini/models', (req, res) => {
     });
   }
 
-  res.json({
-    success: true,
-    models: [
-      {
-        id: 'gemini-3.5-flash',
-        name: 'Gemini 3.5 Flash',
-        provider: 'gemini',
-        active: true,
-        contextLength: 1048576,
-        description: 'Fast, high-quality multimodal model suited for diverse, low-latency tasks.',
-      },
-      {
-        id: 'gemini-3.1-pro-preview',
-        name: 'Gemini 3.1 Pro (Preview)',
-        provider: 'gemini',
-        active: true,
-        contextLength: 2097152,
-        description: 'Advanced reasoning, complex coding, and logical analysis champion.',
-      },
-    ],
-  });
+  try {
+    const listRes = (await ai.models.list()) as any;
+    const models = (listRes.models || [])
+      .filter((m: any) => 
+        (m.supportedActions?.includes('generateContent') || m.supportedGenerationMethods?.includes('generateContent')) && 
+        !m.name.startsWith('models/embedding') && 
+        !m.name.includes('bidi') && 
+        !m.name.includes('aqa')
+      )
+      .map((m: any) => {
+        const cleanedId = m.name.replace(/^models\//, '');
+        return {
+          id: cleanedId,
+          name: m.displayName || cleanedId,
+          provider: 'gemini',
+          active: true,
+          contextLength: m.inputTokenLimit || 1048576,
+          description: m.description || `Input token limit: ${m.inputTokenLimit || 'unknown'}`,
+        };
+      });
+
+    res.json({
+      success: true,
+      models,
+    });
+  } catch (err: any) {
+    console.error('Error fetching dynamically listing Gemini models:', err);
+    res.json({
+      success: false,
+      models: [],
+      error: err.message || 'Failed to dynamically list models.',
+    });
+  }
 });
 
 // 2. API: Stream Gemini Completion (SSE)

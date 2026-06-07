@@ -49,7 +49,7 @@ export const OllamaProvider: AIProvider = {
         description: `Format: ${m.details?.format || 'unknown'}, Family: ${m.details?.family || 'unknown'}`
       }));
     } catch (e: any) {
-      console.error('Ollama list models failed:', e);
+      console.warn('Ollama list models connection notice:', e.message || e);
       throw new Error(`Failed to reach Ollama: ${e.message}. Ensure Ollama is running and OLLAMA_ORIGINS="*" is set.`);
     }
   },
@@ -155,7 +155,7 @@ export const LMStudioProvider: AIProvider = {
         description: `LM Studio compatible model: ${m.owned_by || 'local'}`
       }));
     } catch (e: any) {
-      console.error('LM Studio link models failed:', e);
+      console.warn('LM Studio connection notice:', e.message || e);
       throw new Error(`LM Studio connection failed: ${e.message}`);
     }
   },
@@ -287,7 +287,7 @@ export const OpenAICompatibleProvider: AIProvider = {
         description: `OpenAI compatible dynamic endpoint: ${m.owned_by || 'unspecified'}`
       }));
     } catch (e: any) {
-      console.error('OpenAI Compatible list models failed:', e);
+      console.warn('OpenAI Compatible connection notice:', e.message || e);
       throw new Error(`OpenAI-compatible connection failed: ${e.message}`);
     }
   },
@@ -423,7 +423,7 @@ export const LlamaCppProvider: AIProvider = {
         description: 'Single-model active instance hosted directly by llama.cpp server'
       }];
     } catch (e: any) {
-      console.error('llama.cpp props check failed:', e);
+      console.warn('llama.cpp props check notice:', e.message || e);
       throw new Error(`llama.cpp server offline: ${e.message}`);
     }
   },

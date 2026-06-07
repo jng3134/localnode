@@ -25,8 +25,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   topP: 0.9,
   maxTokens: 1024,
   systemPrompt: 'You are an exceptionally helpful, highly capable, and expert AI assistant. Your responses should be comprehensive, accurate, structurally elegant, and concise where appropriate.',
-  activeProviderId: 'gemini', // out-of-the-box working default
-  activeModelId: 'gemini-3.5-flash',
+  activeProviderId: 'ollama', // use local engine by default
+  activeModelId: null, // dynamically resolved on app load
   providerConfigs: {
     ollama: {
       id: 'ollama',
@@ -234,6 +234,30 @@ export const useChatStore = create<ChatStore>((set, get) => {
           get().updateSettings({ activeModelId: null });
         }
       } catch (err: any) {
+        // Fall back to cloud Gemini provider if local connection fails on load
+        if (currentProviderId !== 'gemini' && settings.providerConfigs['gemini']?.enabled) {
+          console.warn(`Local provider "${currentProviderId}" failed to fetch. Automatically falling back to Google Gemini.`);
+          try {
+            const geminiConfig = settings.providerConfigs['gemini'];
+            const geminiProvider = getProvider('gemini');
+            const geminiModels = await geminiProvider.getModels(geminiConfig);
+            if (geminiModels && geminiModels.length > 0) {
+              set({
+                models: geminiModels,
+                isLoadingModels: false,
+                modelsError: null
+              });
+              get().updateSettings({
+                activeProviderId: 'gemini',
+                activeModelId: geminiModels[0].id
+              });
+              return;
+            }
+          } catch (geminiErr: any) {
+            console.warn('Fallback Gemini model list fetch query also failed:', geminiErr);
+          }
+        }
+
         set({
           models: [],
           isLoadingModels: false,
