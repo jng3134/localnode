@@ -461,7 +461,8 @@ export const useChatStore = create<ChatStore>((set, get) => {
           .filter(m => m.id !== assistantMsgId)
           .map(m => ({
             role: m.role,
-            content: m.content
+            content: m.content,
+            attachments: m.attachments
           }));
 
         const provider = getProvider(providerId);
@@ -654,7 +655,8 @@ export const useChatStore = create<ChatStore>((set, get) => {
           .filter(m => m.id !== newAssistantMsgId)
           .map(m => ({
             role: m.role,
-            content: m.content
+            content: m.content,
+            attachments: m.attachments
           }));
 
         const provider = getProvider(settings.activeProviderId);

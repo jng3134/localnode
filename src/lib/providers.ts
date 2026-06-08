@@ -9,12 +9,12 @@ export interface AIProvider {
   getModels(config: ProviderConfig): Promise<Model[]>;
   generateChatCompletion(
     config: ProviderConfig,
-    messages: { role: string; content: string }[],
+    messages: { role: string; content: string; attachments?: any[] }[],
     options: { model: string; temperature: number; topP: number; maxTokens: number; systemPrompt?: string }
   ): Promise<string>;
   streamChatCompletion(
     config: ProviderConfig,
-    messages: { role: string; content: string }[],
+    messages: { role: string; content: string; attachments?: any[] }[],
     options: { model: string; temperature: number; topP: number; maxTokens: number; systemPrompt?: string },
     onChunk: (text: string) => void,
     signal?: AbortSignal
@@ -24,10 +24,104 @@ export interface AIProvider {
 // Helper to clean model IDs (removes paths if LM Studio includes files, etc.)
 function formatModelName(name: string): string {
   if (!name) return 'Unknown Model';
-  // Remove file paths or tags if excessive
   const parts = name.split('/');
   return parts[parts.length - 1];
 }
+
+// Helper to map generic messages to OpenAI vision array format
+function formatOpenAIMessages(messages: any[], systemPrompt?: string) {
+  const formatted = messages.map(m => {
+    if (!m.attachments || m.attachments.length === 0) {
+      return { role: m.role, content: m.content };
+    }
+
+    const content: any[] = [{ type: 'text', text: m.content || ' ' }];
+    for (const att of m.attachments) {
+      if (att.previewBase64 && att.type.startsWith('image/')) {
+        content.push({
+          type: 'image_url',
+          image_url: { url: att.previewBase64 } // assumes data:image/jpeg;base64,... is already present
+        });
+      } else if (att.previewBase64 && att.type.startsWith('text/')) {
+        // Appending text content directly
+        const rawText = atob(att.previewBase64.split(',')[1] || '');
+        content[0].text += `\n\n--- Attached File: ${att.name} ---\n${rawText}`;
+      }
+    }
+    return { role: m.role, content };
+  });
+
+  if (systemPrompt) {
+    formatted.unshift({ role: 'system', content: systemPrompt });
+  }
+  return formatted;
+}
+
+// Helper to map to Ollama native API format
+function formatOllamaMessages(messages: any[], systemPrompt?: string) {
+  const formatted = messages.map(m => {
+    let textContent = m.content || ' ';
+    const images: string[] = [];
+    
+    if (m.attachments) {
+      for (const att of m.attachments) {
+        if (att.previewBase64 && att.type.startsWith('image/')) {
+          // Ollama images array expects bare base64 (without data:image/png;base64,)
+          const base64Data = att.previewBase64.split(',')[1];
+          if (base64Data) images.push(base64Data);
+        } else if (att.previewBase64 && att.type.startsWith('text/')) {
+          const rawText = atob(att.previewBase64.split(',')[1] || '');
+          textContent += `\n\n--- Attached File: ${att.name} ---\n${rawText}`;
+        }
+      }
+    }
+    
+    const out: any = { role: m.role, content: textContent };
+    if (images.length > 0) out.images = images;
+    return out;
+  });
+
+  if (systemPrompt) {
+    formatted.unshift({ role: 'system', content: systemPrompt });
+  }
+  return formatted;
+}
+
+// Helper for Gemini parts
+function formatGeminiContents(messages: any[]) {
+  return messages.map(m => {
+    const parts: any[] = [{ text: m.content || ' ' }];
+    
+    if (m.attachments) {
+      for (const att of m.attachments) {
+        if (att.previewBase64) {
+          const split = att.previewBase64.split(',');
+          let mimeType = att.type || 'text/plain';
+          // if it has dataUri header, extract actual mime
+          if (att.previewBase64.startsWith('data:')) {
+            const header = split[0];
+            const parsedMime = header.substring(5, header.indexOf(';'));
+            if (parsedMime) mimeType = parsedMime;
+          }
+          
+          if (mimeType.startsWith('text/')) {
+            const rawText = atob(split[1] || '');
+            parts[0].text += `\n\n--- Attached File: ${att.name} ---\n${rawText}`;
+          } else {
+            parts.push({
+              inlineData: {
+                mimeType,
+                data: split[1] || att.previewBase64
+              }
+            });
+          }
+        }
+      }
+    }
+    return { role: m.role, parts };
+  });
+}
+
 
 export const OllamaProvider: AIProvider = {
   async getModels(config: ProviderConfig): Promise<Model[]> {
@@ -55,8 +149,7 @@ export const OllamaProvider: AIProvider = {
   },
 
   async generateChatCompletion(config, messages, options) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOllamaMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/api/chat`, {
       method: 'POST',
@@ -83,8 +176,7 @@ export const OllamaProvider: AIProvider = {
   },
 
   async streamChatCompletion(config, messages, options, onChunk, signal) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOllamaMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/api/chat`, {
       method: 'POST',
@@ -161,8 +253,7 @@ export const LMStudioProvider: AIProvider = {
   },
 
   async generateChatCompletion(config, messages, options) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/v1/chat/completions`, {
       method: 'POST',
@@ -186,8 +277,7 @@ export const LMStudioProvider: AIProvider = {
   },
 
   async streamChatCompletion(config, messages, options, onChunk, signal) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/v1/chat/completions`, {
       method: 'POST',
@@ -293,8 +383,7 @@ export const OpenAICompatibleProvider: AIProvider = {
   },
 
   async generateChatCompletion(config, messages, options) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
     const headers: Record<string, string> = {};
     if (config.apiKey) {
       headers['Authorization'] = `Bearer ${config.apiKey}`;
@@ -340,8 +429,7 @@ export const OpenAICompatibleProvider: AIProvider = {
   },
 
   async streamChatCompletion(config, messages, options, onChunk, signal) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
     const headers: Record<string, string> = {};
     if (config.apiKey) {
       headers['Authorization'] = `Bearer ${config.apiKey}`;
@@ -432,8 +520,7 @@ export const LlamaCppProvider: AIProvider = {
     // llama.cpp custom format or OpenAI-compatible endpoint
     // llama.cpp natively implements /v1/chat/completions (just like OpenAI) or directly /completion.
     // Let's use /v1/chat/completions for extreme robustness and unified format compatibility.
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/v1/chat/completions`, {
       method: 'POST',
@@ -453,8 +540,7 @@ export const LlamaCppProvider: AIProvider = {
   },
 
   async streamChatCompletion(config, messages, options, onChunk, signal) {
-    const systemPromptMsg = options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : [];
-    const formattedMessages = [...systemPromptMsg, ...messages];
+    const formattedMessages = formatOpenAIMessages(messages, options.systemPrompt);
 
     const res = await fetch(`${config.url}/v1/chat/completions`, {
       method: 'POST',
@@ -525,10 +611,7 @@ export const GeminiClientProvider: AIProvider = {
 
   async generateChatCompletion(config, messages, options) {
     // Convert to Gemini API contents expectation
-    const contents = messages.map(m => ({
-      role: m.role,
-      parts: [{ text: m.content }]
-    }));
+    const contents = formatGeminiContents(messages);
 
     const res = await fetch('/api/providers/gemini/chat', {
       method: 'POST',
@@ -586,10 +669,7 @@ export const GeminiClientProvider: AIProvider = {
   },
 
   async streamChatCompletion(config, messages, options, onChunk, signal) {
-    const contents = messages.map(m => ({
-      role: m.role,
-      parts: [{ text: m.content }]
-    }));
+    const contents = formatGeminiContents(messages);
 
     const res = await fetch('/api/providers/gemini/chat', {
       method: 'POST',
