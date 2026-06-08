@@ -80,6 +80,52 @@ app.get('/api/providers/gemini/models', async (req, res) => {
   }
 });
 
+// Helper to parse nested Google API error structures to friendly messages
+function parseFriendlyErrorMessage(err: any): string {
+  const originalMessage = err.message || '';
+  let friendlyError = originalMessage;
+  
+  if (typeof friendlyError === 'string') {
+    try {
+      // Look for a JSON block inside the error string
+      if (friendlyError.includes('{"error"')) {
+        const startIdx = friendlyError.indexOf('{');
+        const jsonStr = friendlyError.substring(startIdx);
+        const parsed = JSON.parse(jsonStr);
+        const nestedMsg = parsed.error?.message;
+        if (nestedMsg) {
+          // Check if nestedMsg itself contains a serialized JSON error
+          if (typeof nestedMsg === 'string' && nestedMsg.trim().startsWith('{')) {
+            const nestedParsed = JSON.parse(nestedMsg);
+            if (nestedParsed.error?.message) {
+              friendlyError = nestedParsed.error.message;
+            } else if (nestedParsed.message) {
+              friendlyError = nestedParsed.message;
+            } else {
+              friendlyError = nestedMsg;
+            }
+          } else {
+            friendlyError = nestedMsg;
+          }
+        }
+      }
+    } catch (e) {
+      // Fallback on parsing failure
+    }
+  }
+  
+  // If we identify specific status code substrings, translate them nicely
+  if (friendlyError === originalMessage) {
+    if (friendlyError.includes('503') || friendlyError.includes('UNAVAILABLE')) {
+      friendlyError = 'The Gemini service is currently experiencing high demand. Please wait a moment and try again.';
+    } else if (friendlyError.includes('429') || friendlyError.includes('RESOURCE_EXHAUSTED')) {
+      friendlyError = 'Rate limit exceeded. Please slow down and try again shortly.';
+    }
+  }
+  
+  return friendlyError || 'Error occurred during streaming';
+}
+
 // 2. API: Stream Gemini Completion (SSE)
 app.post('/api/providers/gemini/chat', async (req, res) => {
   if (!geminiApiKey || !ai) {
@@ -114,16 +160,49 @@ app.post('/api/providers/gemini/chat', async (req, res) => {
           : [{ text: typeof m.parts === 'string' ? m.parts : m.content || '' }]
       }));
 
-    const streamResponse = await ai.models.generateContentStream({
-      model,
-      contents: formattedContents,
-      config: {
-        systemInstruction,
-        temperature: config?.temperature,
-        topP: config?.topP,
-        maxOutputTokens: config?.maxOutputTokens,
-      },
-    });
+    // Robust retry framework with backoff for transient error categories (503 Service Unavailable, 429 Rate Limits)
+    let streamResponse;
+    const maxRetries = 3;
+    let attempt = 0;
+    let delay = 1000; // start with a 1-second backoff
+
+    while (true) {
+      try {
+        streamResponse = await ai.models.generateContentStream({
+          model,
+          contents: formattedContents,
+          config: {
+            systemInstruction,
+            temperature: config?.temperature,
+            topP: config?.topP,
+            maxOutputTokens: config?.maxOutputTokens,
+          },
+        });
+        break; // Successfully established stream
+      } catch (err: any) {
+        attempt++;
+        const errStr = err.message || '';
+        const isTransient = 
+          errStr.includes('503') || 
+          errStr.includes('UNAVAILABLE') ||
+          errStr.includes('429') ||
+          errStr.includes('RESOURCE_EXHAUSTED') ||
+          err.status === 503 ||
+          err.status === 429 ||
+          err.code === 503 ||
+          err.code === 429 ||
+          JSON.stringify(err).includes('503') ||
+          JSON.stringify(err).includes('UNAVAILABLE');
+
+        if (!isTransient || attempt >= maxRetries) {
+          throw err; // bubble up to general catch block
+        }
+
+        console.warn(`[Gemini Stream API] Transient error (attempt ${attempt}/${maxRetries}): ${errStr}. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500));
+        delay *= 2; // exponential backoff
+      }
+    }
 
     for await (const chunk of streamResponse) {
       if (chunk.text) {
@@ -134,7 +213,8 @@ app.post('/api/providers/gemini/chat', async (req, res) => {
     res.end();
   } catch (err: any) {
     console.error('Error in Gemini Stream API:', err);
-    res.write(`data: ${JSON.stringify({ error: err.message || 'Error occurred during streaming' })}\n\n`);
+    const friendlyMessage = parseFriendlyErrorMessage(err);
+    res.write(`data: ${JSON.stringify({ error: friendlyMessage })}\n\n`);
     res.end();
   }
 });
