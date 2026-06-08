@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Project, ProjectFile } from '../../types';
 import { FileExplorer } from './FileExplorer';
 import { EditorArea } from './EditorArea';
 import { AIEditorPanel } from './AIEditorPanel';
+import { useChatStore } from '../../store/useChatStore';
 
 interface CodeWorkspaceProps {
   project: Project;
@@ -11,9 +12,30 @@ interface CodeWorkspaceProps {
 export const CodeWorkspace: React.FC<CodeWorkspaceProps> = ({ project }) => {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   
-  // Minimal custom widths for demonstration
+  const conversations = useChatStore(state => state.conversations);
+  const activeConversationId = useChatStore(state => state.activeConversationId);
+  const setActiveConversationId = useChatStore(state => state.setActiveConversationId);
+  const createConversation = useChatStore(state => state.createConversation);
+
+  // Minimal custom widths with expanded default right-hand panel for desktop-level precision
   const [leftWidth, setLeftWidth] = useState(250);
-  const [rightWidth, setRightWidth] = useState(320);
+  const [rightWidth, setRightWidth] = useState(420);
+
+  // Sync active thread with the active project on mount/transition
+  useEffect(() => {
+    const activeConv = activeConversationId ? conversations[activeConversationId] : null;
+    if (!activeConv || activeConv.projectId !== project.id) {
+      const projectConversations = Object.values(conversations)
+        .filter(c => c.projectId === project.id)
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+
+      if (projectConversations.length > 0) {
+        setActiveConversationId(projectConversations[0].id);
+      } else {
+        createConversation();
+      }
+    }
+  }, [project.id]);
 
   const selectedFile = project.files.find(f => f.id === selectedFileId) || null;
 
