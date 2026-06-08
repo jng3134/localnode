@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { ChatState, Conversation, Message, AppSettings, Model, ProviderConfig } from '../types';
 import { getProvider } from '../lib/providers';
 import { toast } from 'sonner';
+import { useProjectStore } from './useProjectStore';
 
 // Custom lightweight UID generator to avoid external dependencies
 function generateUUID() {
@@ -286,6 +287,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
       const newId = 'chat_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
       const settings = get().settings;
       const activeModelId = modelId || settings.activeModelId || '';
+      const activeProjectId = useProjectStore.getState().activeProjectId;
 
       const newConv: Conversation = {
         id: newId,
@@ -293,6 +295,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         pinned: false,
+        projectId: activeProjectId || undefined,
         activeMessageId: null,
         messages: {},
         temperature: settings.temperature,
@@ -300,6 +303,10 @@ export const useChatStore = create<ChatStore>((set, get) => {
         maxTokens: settings.maxTokens,
         systemPrompt: settings.systemPrompt,
       };
+
+      if (activeProjectId) {
+        useProjectStore.getState().addChatToProject(activeProjectId, newId);
+      }
 
       const conversations = { ...get().conversations, [newId]: newConv };
       set({ conversations, activeConversationId: newId });
@@ -310,7 +317,14 @@ export const useChatStore = create<ChatStore>((set, get) => {
     deleteConversation: (id) => {
       get().stopGeneration(id); // Clean up active handles if run
       const conversations = { ...get().conversations };
+      const chatProjId = conversations[id]?.projectId;
+      
       delete conversations[id];
+
+      // Remove from project if any
+      if (chatProjId) {
+        useProjectStore.getState().removeChatFromProject(chatProjId, id);
+      }
 
       let nextActiveId = get().activeConversationId;
       if (nextActiveId === id) {
@@ -451,6 +465,31 @@ export const useChatStore = create<ChatStore>((set, get) => {
 
         const provider = getProvider(providerId);
         const providerConfig = settings.providerConfigs[providerId];
+        
+        let contextSystemPrompt = conversation.systemPrompt || settings.systemPrompt;
+        
+        // Inject Project Memories if conversation is part of a project
+        if (conversation.projectId) {
+          const project = useProjectStore.getState().projects[conversation.projectId];
+          let projectContextText = `\n\n--- PROJECT CONTEXT ---\nProject: ${project?.name || 'Workspace'}\n`;
+          let hasContext = false;
+          
+          if (project?.memories && project.memories.length > 0) {
+             const memoriesText = project.memories.map(m => `- ${m.content}`).join('\n');
+             projectContextText += `\nMemories & Instructions:\n${memoriesText}\n`;
+             hasContext = true;
+          }
+
+          if (project?.files && project.files.length > 0) {
+             const filesList = project.files.map(f => `- ${f.name} (${(f.size / 1024).toFixed(1)} KB)`).join('\n');
+             projectContextText += `\nReference Files Attached:\n${filesList}\n`;
+             hasContext = true;
+          }
+
+          if (hasContext) {
+            contextSystemPrompt += projectContextText;
+          }
+        }
 
         await provider.streamChatCompletion(
           providerConfig,
@@ -460,7 +499,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
             temperature: conversation.temperature || settings.temperature,
             topP: conversation.topP || settings.topP,
             maxTokens: conversation.maxTokens || settings.maxTokens,
-            systemPrompt: conversation.systemPrompt || settings.systemPrompt,
+            systemPrompt: contextSystemPrompt,
           },
           (textChunk) => {
             // Reactive chunk accumulator

@@ -36,12 +36,40 @@ export interface ProviderConfig {
   isCloud?: boolean;
 }
 
+export interface Memory {
+  id: string;
+  content: string;
+  createdAt: number;
+}
+
+export interface ProjectFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string; // mime type or extension
+  uploadedAt: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  createdAt: number;
+  updatedAt: number;
+  chats: string[]; // conversation IDs
+  files: ProjectFile[];
+  memories: Memory[];
+}
+
 export interface Conversation {
   id: string;
   title: string;
   createdAt: number;
   updatedAt: number;
   pinned: boolean;
+  projectId?: string; // which project it belongs to
   activeMessageId?: string | null; // ID of the leaf message of the active branch
   // Message records stored in a map or flat record for easy tree traversal
   messages: Record<string, Message>;
