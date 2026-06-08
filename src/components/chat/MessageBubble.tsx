@@ -115,7 +115,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
             <span className="text-zinc-300">
               {isUser ? 'PROMPT' : (message.model || 'ASSISTANT')}
             </span>
-            <span className="text-zinc-650">•</span>
+            <span className="text-zinc-600">•</span>
             <div className="flex items-center gap-1 font-mono">
               <Clock size={10} />
               <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -192,7 +192,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
                     setIsEditing(false);
                     setEditContent(message.content);
                   }}
-                  className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 text-xs text-zinc-350 cursor-pointer"
+                  className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 text-xs text-zinc-400 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -242,7 +242,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
               {isUser ? null : (
                 <button
                   onClick={() => regenerateMessage(message.id)}
-                  className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-lg border border-rose-850 hover:bg-rose-950/30 text-rose-400 cursor-pointer self-start transition-colors font-medium text-xs font-mono"
+                  className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-lg border border-rose-900/40 hover:bg-rose-950/20 text-rose-400 cursor-pointer self-start transition-colors font-medium text-xs font-mono"
                 >
                   <RotateCcw size={12} />
                   Retry Generation

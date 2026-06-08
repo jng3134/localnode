@@ -284,7 +284,7 @@ export const EditorArea: React.FC<EditorAreaProps> = ({ project, file }) => {
                         value={userInput}
                         onChange={e => setUserInput(e.target.value)}
                         placeholder="Type 'help' or 'compile'..."
-                        className="flex-1 bg-transparent text-white outline-none border-none placeholder:text-zinc-650"
+                        className="flex-1 bg-transparent text-white outline-none border-none placeholder:text-zinc-500"
                       />
                     </form>
                   </div>

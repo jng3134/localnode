@@ -228,7 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
                 deleteConversation(c.id);
               }}
               title="Delete thread"
-              className="p-1 rounded text-zinc-400 cursor-pointer hover:bg-white/10 hover:text-rose-455 transition"
+              className="p-1 rounded text-zinc-400 cursor-pointer hover:bg-white/10 hover:text-rose-500 transition"
             >
               <Trash2 size={10} />
             </button>
@@ -377,10 +377,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
 
           {/* Sidebar Footer Controls */}
           <div className="p-4 border-t border-white/[0.05] bg-transparent space-y-3 flex-shrink-0 text-xs font-sans">
-            <div className="flex items-center justify-between text-zinc-450">
+            <div className="flex items-center justify-between text-zinc-400">
               <div className="flex items-center gap-2">
                 <div className={`w-1.5 h-1.5 rounded-full ${activeProviderId === 'gemini' ? 'bg-indigo-400 shadow-[0_0_6px_rgba(99,102,241,0.6)]' : 'bg-emerald-400 animate-pulse'}`}></div>
-                <div className="font-mono text-[11px] text-zinc-350">
+                <div className="font-mono text-[11px] text-zinc-300">
                   Engine: <span className="text-white font-semibold">{activeProviderId === 'gemini' ? 'Gemini' : activeProviderId.toUpperCase()}</span>
                 </div>
               </div>

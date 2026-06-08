@@ -117,8 +117,8 @@ export const FilesViewer: React.FC<FilesViewerProps> = ({ project, addFile, dele
                 </div>
               </div>
             ) : isCode ? (
-              <div className="font-mono text-sm text-zinc-350 whitespace-pre-wrap flex gap-4">
-                <div className="text-zinc-650 select-none text-right flex flex-col gap-1 min-w-[24px]">
+              <div className="font-mono text-sm text-zinc-400 whitespace-pre-wrap flex gap-4">
+                <div className="text-zinc-600 select-none text-right flex flex-col gap-1 min-w-[24px]">
                   {Array.from({ length: Math.max(1, (selectedFile.content || '').split('\n').length) }).map((_, i) => <div key={i}>{i + 1}</div>)}
                 </div>
                 <div className="flex-1 flex flex-col gap-1">

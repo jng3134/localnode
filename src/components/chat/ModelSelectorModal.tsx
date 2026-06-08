@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Model } from '../../types';
 import { 
-  X, Search, Cpu, Eye, Code, Layers, FileJson, Lock, Zap, FileText, Image, 
-  TerminalSquare, Box, PenTool, CheckCircle2
+  X, Search, Cpu, Check, Star, ChevronRight, SlidersHorizontal, 
+  Eye, Box, Brain, Terminal, FileCode, Grid, Shield, Zap
 } from 'lucide-react';
 import { useChatStore } from '../../store/useChatStore';
 
@@ -16,180 +16,398 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({ onClose 
   const settings = useChatStore(state => state.settings);
   const updateSettings = useChatStore(state => state.updateSettings);
   const fetchModels = useChatStore(state => state.fetchModels);
-  
+  const toggleFavoriteModel = useChatStore(state => state.toggleFavoriteModel);
+  const isLoadingModels = useChatStore(state => state.isLoadingModels);
+
+  // Search & Filter State
   const [search, setSearch] = useState('');
-  const [familyFilter, setFamilyFilter] = useState<string>('All');
+  const [activeCategory, setActiveCategory] = useState<'all' | 'favorites' | 'local' | 'cloud' | 'reasoning' | 'vision'>('all');
+  const [selectedModelId, setSelectedModelId] = useState<string>(settings.activeModelId || '');
+
+  // Auto-select first model on load
+  useEffect(() => {
+    if (!selectedModelId && models.length > 0) {
+      setSelectedModelId(models[0].id);
+    }
+  }, [models, selectedModelId]);
+
+  const selectedModel = useMemo(() => {
+    return models.find(m => m.id === selectedModelId) || models.find(m => m.id === settings.activeModelId) || models[0];
+  }, [models, selectedModelId, settings.activeModelId]);
+
+  // Categories definition
+  const categories = [
+    { id: 'all', label: 'All Kernels' },
+    { id: 'favorites', label: 'Starred' },
+    { id: 'local', label: 'Local (Offline)' },
+    { id: 'cloud', label: 'Gemini Cloud' },
+    { id: 'reasoning', label: 'Thinking 🧠' },
+    { id: 'vision', label: 'Vision 👁️' },
+  ] as const;
 
   const filteredModels = useMemo(() => {
-    return models.filter(m => {
-      const matchesSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.id.toLowerCase().includes(search.toLowerCase());
-      const matchesFamily = familyFilter === 'All' || m.capabilities?.family === familyFilter;
-      return matchesSearch && matchesFamily;
-    });
-  }, [models, search, familyFilter]);
+    return models
+      .filter(m => {
+        const query = search.toLowerCase();
+        const matchesSearch = m.name.toLowerCase().includes(query) || m.id.toLowerCase().includes(query);
+        
+        let matchesCategory = true;
+        if (activeCategory === 'favorites') {
+          matchesCategory = !!m.favorite;
+        } else if (activeCategory === 'local') {
+          matchesCategory = m.provider !== 'gemini';
+        } else if (activeCategory === 'cloud') {
+          matchesCategory = m.provider === 'gemini';
+        } else if (activeCategory === 'reasoning') {
+          matchesCategory = !!m.capabilities?.supportsReasoning || m.id.toLowerCase().includes('thinking') || m.id.toLowerCase().includes('reasoning') || m.id.toLowerCase().includes('r1');
+        } else if (activeCategory === 'vision') {
+          matchesCategory = !!m.capabilities?.supportsVision;
+        }
 
-  const families = useMemo(() => {
-    const set = new Set<string>();
-    models.forEach(m => {
-      if (m.capabilities?.family) set.add(m.capabilities.family);
-    });
-    return ['All', ...Array.from(set).sort()];
-  }, [models]);
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => {
+        // Starred always floats to the top, sub-sort by context limit or name
+        const aFav = a.favorite ? 1 : 0;
+        const bFav = b.favorite ? 1 : 0;
+        if (aFav !== bFav) return bFav - aFav;
 
-  const handleSelect = (modelId: string) => {
+        const aCtx = a.capabilities?.contextWindow || a.contextLength || 0;
+        const bCtx = b.capabilities?.contextWindow || b.contextLength || 0;
+        if (aCtx !== bCtx) return bCtx - aCtx;
+
+        return a.name.localeCompare(b.name);
+      });
+  }, [models, search, activeCategory]);
+
+  const handleActivateModel = (modelId: string) => {
     updateSettings({ activeModelId: modelId });
-    onClose();
   };
 
-  const formatContext = (ctx: number | undefined) => {
-    if (!ctx) return 'Unknown';
-    if (ctx >= 1000000) return `${(ctx / 1000000).toFixed(1)}M`;
-    if (ctx >= 1000) return `${(ctx / 1000).toFixed(0)}K`;
-    return ctx.toString();
+  const formatContextValue = (ctx: number | undefined) => {
+    if (!ctx) return 'n/a';
+    if (ctx >= 1048576) return `${(ctx / 1048576).toFixed(0)}M`;
+    if (ctx >= 1024) return `${(ctx / 1024).toFixed(0)}K`;
+    return ctx.toLocaleString();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8" id="model-selector-container">
+      {/* Pristine Minimal Blur Backdrop */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-[#020617]/80 backdrop-blur-md"
+        transition={{ duration: 0.15 }}
+        className="absolute inset-0 bg-black/75 backdrop-blur-md"
         onClick={onClose}
       />
-      
+
+      {/* Primary Modal Container */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.98, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-4xl bg-[#0a0f1c] border border-white/10 rounded-2xl shadow-2xl flex flex-col h-[80vh] overflow-hidden"
+        exit={{ opacity: 0, scale: 0.98, y: 8 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="relative w-full max-w-5xl bg-[#090a0f] border border-zinc-800/80 rounded-2xl shadow-2xl flex flex-col h-[75vh] min-h-[550px] overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+        {/* Sleek Minimal Header */}
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-zinc-900 bg-[#090a0f] z-10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl border border-indigo-500/30">
-              <Cpu size={24} />
-            </div>
+            <Cpu size={16} className="text-zinc-400" />
             <div>
-              <h2 className="text-xl font-bold text-white">Model Registry</h2>
-              <p className="text-xs text-zinc-400 font-medium">Select an AI model for your workspace</p>
+              <h2 className="text-sm font-bold text-zinc-100 tracking-tight font-sans">Model Registry kernels</h2>
+              <p className="text-[11px] text-zinc-500 font-medium">Select the active inference backend for this session</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer">
-            <X size={20} />
+          <button 
+            onClick={onClose} 
+            className="p-1 px-2.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <span>Esc</span>
+            <X size={12} />
           </button>
         </div>
 
-        <div className="p-6 border-b border-white/[0.05] bg-black/20 flex flex-col gap-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-              <input 
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search models..."
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-indigo-500/50 outline-none transition-all placeholder:text-zinc-600"
-              />
+        {/* Workspace Dual Layout */}
+        <div className="flex flex-1 overflow-hidden">
+          
+          {/* Left Column: Filter + List selection Panel */}
+          <div className="flex-1 flex flex-col overflow-hidden border-r border-zinc-900">
+            
+            {/* Integrated Top Filter Bar */}
+            <div className="p-4 border-b border-zinc-900/60 bg-[#0b0c13]/40 flex flex-col gap-3.5 z-10 shrink-0">
+              {/* Search input with focus glow */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search architecture, provider, constraints..."
+                  className="w-full bg-[#04050a] border border-zinc-800/70 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-200 focus:border-indigo-500/50 outline-none transition-all placeholder:text-zinc-600 font-sans"
+                />
+              </div>
+
+              {/* Minimal category pills */}
+              <div className="flex gap-1 overflow-x-auto pb-0.5 scrollbar-none shrink-0 text-zinc-400">
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-tight whitespace-nowrap transition-all cursor-pointer border ${
+                      activeCategory === cat.id
+                        ? 'bg-zinc-100 border-zinc-100 text-zinc-950 font-bold'
+                        : 'bg-zinc-950/40 border-zinc-900 text-zinc-400 hover:text-zinc-200 hover:border-zinc-800'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Vertically Scrollable List of Models */}
+            <div className="flex-1 overflow-y-auto p-4 scrollbar-thin space-y-2">
+              {filteredModels.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+                  <Cpu size={24} className="text-zinc-700 animate-pulse mb-3" />
+                  <p className="text-[11px] font-semibold text-zinc-400">No matching model profiles found</p>
+                  <p className="text-[10px] text-zinc-600 mt-1">Try redefining your search keyword filter.</p>
+                </div>
+              ) : (
+                filteredModels.map(model => {
+                  const isSelected = selectedModelId === model.id;
+                  const isActive = settings.activeModelId === model.id;
+                  
+                  return (
+                    <div
+                      key={model.id}
+                      onClick={() => setSelectedModelId(model.id)}
+                      onDoubleClick={() => {
+                        handleActivateModel(model.id);
+                        onClose();
+                      }}
+                      className={`group relative flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer text-left ${
+                        isSelected
+                          ? 'bg-zinc-900/60 border-zinc-700/80'
+                          : 'bg-[#0b0c13]/10 border-zinc-900 hover:border-zinc-800/70 hover:bg-[#0b0c13]/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        {/* Active / Icon indicator */}
+                        <div className={`p-1.5 rounded-lg border transition-colors shrink-0 ${
+                          isActive 
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                            : 'bg-zinc-950/60 border-zinc-900 text-zinc-500 group-hover:text-zinc-400'
+                        }`}>
+                          {isActive ? <Check size={12} className="stroke-[2.5]" /> : <Cpu size={12} />}
+                        </div>
+
+                        <div className="min-w-0 flex-1 pr-4">
+                          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                            <h3 className="text-xs font-bold text-zinc-200 tracking-tight line-clamp-1 group-hover:text-white transition">
+                              {model.name}
+                            </h3>
+                            {model.favorite && (
+                              <Star size={9} className="fill-amber-400/95 text-amber-400 shrink-0" />
+                            )}
+                          </div>
+                          
+                          <p className="text-[10px] text-zinc-500 mt-1 leading-relaxed line-clamp-2">
+                            {model.description || `Optimized inference interface powered by ${model.provider}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right metadata badges */}
+                      <div className="flex items-center gap-3.5 shrink-0">
+                        {/* Context Limit Tag */}
+                        <span className="text-[9px] font-bold font-mono px-2 py-0.5 rounded-md bg-zinc-950 text-zinc-400 border border-zinc-900">
+                          {formatContextValue(model.capabilities?.contextWindow || model.contextLength)} ctx
+                        </span>
+                        
+                        {/* Star Toggle */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavoriteModel(model.id);
+                          }}
+                          className={`p-1.5 rounded-md hover:bg-zinc-800 transition cursor-pointer shrink-0 ${
+                            model.favorite ? 'text-amber-400' : 'text-zinc-600 hover:text-zinc-400'
+                          }`}
+                        >
+                          <Star size={11} className={model.favorite ? 'fill-amber-400' : ''} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {families.map(f => (
-              <button
-                key={f}
-                onClick={() => setFamilyFilter(f)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
-                  familyFilter === f
-                    ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200 hover:bg-white/10'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-[#0a0f1c]/50">
-          {filteredModels.length === 0 ? (
-             <div className="flex flex-col items-center justify-center h-full text-zinc-500">
-               <Cpu size={48} className="opacity-20 mb-4" />
-               <p>No models found.</p>
-               <button 
-                 onClick={() => fetchModels()}
-                 className="mt-4 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm transition font-medium cursor-pointer"
-               >
-                 Refresh Models
-               </button>
-             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredModels.map(model => (
-                <div 
-                  key={model.id}
-                  onClick={() => handleSelect(model.id)}
-                  className={`flex flex-col text-left p-4 rounded-xl border transition-all cursor-pointer group ${
-                    settings.activeModelId === model.id
-                      ? 'border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.1)]'
-                      : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-2">
-                       <h3 className="text-base font-bold text-zinc-100">{model.name}</h3>
-                       {settings.activeModelId === model.id && (
-                          <span className="text-[10px] bg-indigo-500 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                            Active
-                          </span>
-                       )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {model.capabilities?.size && model.capabilities.size !== 'Unknown Size' && (
-                       <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 pl-1.5 py-0.5 rounded flex items-center gap-1 font-mono">
-                         <Layers size={10} /> {model.capabilities.size}
-                       </span>
-                    )}
-                    {model.capabilities?.quantization && (
-                       <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 pl-1.5 py-0.5 rounded flex items-center gap-1 font-mono">
-                         <Zap size={10} /> {model.capabilities.quantization}
-                       </span>
-                    )}
-                    <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 pl-1.5 py-0.5 rounded flex items-center gap-1 font-mono">
-                      <Box size={10} /> {formatContext(model.capabilities?.contextWindow || model.contextLength)} Context
+          {/* Right Column: Mini Specs Analyzer & Inspection Details */}
+          <div className="w-[360px] bg-[#07080c] flex flex-col overflow-y-auto max-w-sm shrink-0">
+            {selectedModel ? (
+              <div className="flex-1 flex flex-col p-6 justify-between h-full">
+                
+                {/* Information Header Block */}
+                <div className="space-y-5">
+                  <div>
+                    <span className="text-[9px] font-bold font-mono text-zinc-500 tracking-widest uppercase block mb-1">
+                      Kernel Profile
+                    </span>
+                    <h3 className="text-sm font-bold text-zinc-100 leading-tight tracking-tight mt-0.5">
+                      {selectedModel.name}
+                    </h3>
+                    <span className="text-[10px] text-zinc-400 font-mono bg-zinc-950 px-2 py-1 border border-zinc-900 rounded-md inline-block mt-2 font-semibold">
+                      {selectedModel.id}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 mt-auto text-xs text-zinc-400 font-medium">
-                    <div className="flex items-center gap-2">
-                      <Eye size={12} className={model.capabilities?.supportsVision ? "text-indigo-400" : "opacity-30"} />
-                      <span className={model.capabilities?.supportsVision ? "text-indigo-200" : "opacity-50"}>Vision</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TerminalSquare size={12} className={model.capabilities?.supportsTools ? "text-rose-400" : "opacity-30"} />
-                      <span className={model.capabilities?.supportsTools ? "text-rose-200" : "opacity-50"}>Tools & Function Calling</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <PenTool size={12} className={model.capabilities?.supportsReasoning ? "text-fuchsia-400" : "opacity-30"} />
-                      <span className={model.capabilities?.supportsReasoning ? "text-fuchsia-200" : "opacity-50"}>Reasoning</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileJson size={12} className={model.capabilities?.supportsStructuredOutput ? "text-amber-400" : "opacity-30"} />
-                      <span className={model.capabilities?.supportsStructuredOutput ? "text-amber-200" : "opacity-50"}>JSON Mode</span>
+                  {/* Clean Divider Line */}
+                  <div className="h-px bg-zinc-900" />
+
+                  {/* Spec Sheet Parameters */}
+                  <div className="space-y-4">
+                    <span className="text-[9px] font-bold font-mono text-zinc-500 tracking-widest uppercase block mb-1">
+                      Technical Architecture
+                    </span>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      <div className="flex items-center justify-between text-[11px] leading-relaxed">
+                        <span className="text-zinc-500 font-medium">Platform Driver</span>
+                        <span className="font-mono text-zinc-300 font-bold bg-[#04050a] px-2 py-0.5 rounded border border-zinc-900 truncate max-w-[170px] text-right uppercase">
+                          {selectedModel.provider}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] leading-relaxed">
+                        <span className="text-zinc-500 font-medium">Context Horizon</span>
+                        <span className="font-mono text-cyan-400 font-bold">
+                          {formatContextValue(selectedModel.capabilities?.contextWindow || selectedModel.contextLength)} Tokens
+                        </span>
+                      </div>
+
+                      {selectedModel.capabilities?.size && selectedModel.capabilities.size !== 'Unknown Size' && (
+                        <div className="flex items-center justify-between text-[11px] leading-relaxed">
+                          <span className="text-zinc-500 font-medium">Model Scales</span>
+                          <span className="font-mono text-emerald-400 font-semibold">{selectedModel.capabilities.size}</span>
+                        </div>
+                      )}
+
+                      {selectedModel.capabilities?.quantization && (
+                        <div className="flex items-center justify-between text-[11px] leading-relaxed">
+                          <span className="text-zinc-500 font-medium">Quantization</span>
+                          <span className="font-mono text-amber-400 font-medium">{selectedModel.capabilities.quantization}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-[11px] leading-relaxed">
+                        <span className="text-zinc-500 font-medium">Execution Scope</span>
+                        <span className="font-mono text-zinc-400 font-semibold flex items-center gap-1.5">
+                          {selectedModel.provider === 'gemini' ? (
+                            <>
+                              <Zap size={10} className="text-indigo-400" />
+                              <span>Remote API</span>
+                            </>
+                          ) : (
+                            <>
+                              <Shield size={10} className="text-zinc-500" />
+                              <span>Local Driver</span>
+                            </>
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap gap-2 text-[10px] font-mono text-zinc-500">
-                     <span>Supports:</span>
-                     {model.capabilities?.inputTypes?.map(t => (
-                       <span key={t} className="bg-white/5 px-1.5 py-0.5 rounded">{t}</span>
-                     ))}
+
+                  {/* Clean Divider Line */}
+                  <div className="h-px bg-zinc-900" />
+
+                  {/* Capabilities Tags Checkboxes */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-bold font-mono text-zinc-500 tracking-widest uppercase block">
+                      Feature Modalities
+                    </span>
+
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-semibold text-zinc-400">
+                      <div className={`flex items-center gap-1.5 p-2 rounded-lg border ${
+                        selectedModel.capabilities?.supportsVision 
+                          ? 'border-indigo-900/40 bg-indigo-950/20 text-indigo-300' 
+                          : 'border-zinc-900/60 bg-transparent text-zinc-600'
+                      }`}>
+                        <Eye size={11} />
+                        <span>Vision media</span>
+                      </div>
+
+                      <div className={`flex items-center gap-1.5 p-2 rounded-lg border ${
+                        selectedModel.capabilities?.supportsReasoning 
+                          ? 'border-purple-900/40 bg-purple-950/20 text-purple-300' 
+                          : 'border-zinc-900/60 bg-transparent text-zinc-600'
+                      }`}>
+                        <Brain size={11} />
+                        <span>Reasoning</span>
+                      </div>
+
+                      <div className={`flex items-center gap-1.5 p-2 rounded-lg border ${
+                        selectedModel.capabilities?.supportsTools 
+                          ? 'border-rose-900/40 bg-rose-950/20 text-rose-300' 
+                          : 'border-zinc-900/60 bg-transparent text-zinc-600'
+                      }`}>
+                        <Terminal size={11} />
+                        <span>Tool Calls</span>
+                      </div>
+
+                      <div className={`flex items-center gap-1.5 p-2 rounded-lg border ${
+                        selectedModel.capabilities?.supportsStructuredOutput 
+                          ? 'border-amber-900/40 bg-amber-950/20 text-amber-300' 
+                          : 'border-zinc-900/60 bg-transparent text-zinc-600'
+                      }`}>
+                        <FileCode size={11} />
+                        <span>JSON Strict</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clean Divider Line */}
+                  <div className="h-px bg-zinc-900" />
+
+                  {/* Descriptive Text Box */}
+                  <div className="space-y-1.5">
+                    <span className="text-[9px] font-bold font-mono text-zinc-500 tracking-widest uppercase block">
+                      Description & Scope
+                    </span>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed font-sans mt-1">
+                      {selectedModel.description || `No specialized driver documentation available for ${selectedModel.name}. Fully compatible with standard prompt completion schemas.`}
+                    </p>
                   </div>
 
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* Primary Action Button (Bottom) */}
+                <div className="pt-6 mt-6 shrink-0 border-t border-zinc-900">
+                  <button
+                    onClick={() => {
+                      handleActivateModel(selectedModel.id);
+                      onClose();
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-zinc-100 hover:bg-white active:scale-[0.98] transition-all duration-150 text-zinc-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                  >
+                    <span>Activate {selectedModel.name.split(' ')[0]}</span>
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
+
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-zinc-600">
+                <Cpu size={20} className="opacity-30 mb-2 animate-spin" />
+                <p className="text-[11px]">Selecting model driver...</p>
+              </div>
+            )}
+          </div>
+
         </div>
       </motion.div>
     </div>
