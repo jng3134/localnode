@@ -3,6 +3,7 @@ import { Project, ProjectFile } from '../../types';
 import { FileExplorer } from './FileExplorer';
 import { EditorArea } from './EditorArea';
 import { AIEditorPanel } from './AIEditorPanel';
+import { WorkspaceDashboard } from './WorkspaceDashboard';
 import { useChatStore } from '../../store/useChatStore';
 
 interface CodeWorkspaceProps {
@@ -59,15 +60,7 @@ export const CodeWorkspace: React.FC<CodeWorkspaceProps> = ({ project }) => {
         {selectedFile ? (
           <EditorArea file={selectedFile} project={project} />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
-            <div className="w-16 h-16 bg-white/[0.02] rounded-2xl flex items-center justify-center mb-4 border border-white/[0.05] shadow-inner">
-              <svg className="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-            </div>
-            <p className="font-medium text-zinc-400">Code Workspace</p>
-            <p className="text-xs mt-1">Select a file to start editing</p>
-          </div>
+          <WorkspaceDashboard project={project} onSelectFile={setSelectedFileId} />
         )}
       </div>
 

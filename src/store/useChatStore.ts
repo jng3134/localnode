@@ -101,6 +101,52 @@ export interface ChatStore extends ChatState {
   getActiveMessages: () => Message[];
 }
 
+function getEffectiveSystemPrompt(conversation: Conversation, settings: AppSettings): string {
+  let contextSystemPrompt = conversation.systemPrompt || settings.systemPrompt;
+  
+  if (conversation.projectId) {
+    const project = useProjectStore.getState().projects[conversation.projectId];
+    let projectContextText = `\n\n--- PROJECT CONTEXT ---\nProject: ${project?.name || 'Workspace'}\n`;
+    let hasContext = false;
+    
+    if (project?.memories && project.memories.length > 0) {
+       const memoriesText = project.memories.map(m => `- ${m.content}`).join('\n');
+       projectContextText += `\nMemories & Instructions:\n${memoriesText}\n`;
+       hasContext = true;
+    }
+
+    if (project?.files && project.files.length > 0) {
+       let filesText = `\nReference Files Associated & Contents (Read-only):\n`;
+       project.files.forEach(f => {
+         filesText += `\n--- File: ${f.name} ---\n${f.content}\n---------------------\n`;
+       });
+       projectContextText += filesText;
+       hasContext = true;
+    }
+    
+    // Inject Knowledge Base Chunks context
+    if (project?.knowledgeCollections && project.knowledgeCollections.length > 0) {
+       const kDocs = Object.values(useProjectStore.getState().knowledgeDocuments)
+         .filter(d => project.knowledgeCollections.includes(d.collectionId));
+       if (kDocs.length > 0) {
+         projectContextText += `\nRetrieved Knowledge Chunks (Local RAG Vector Search):\n`;
+         // Mock retrieving snippets
+         const topDocs = kDocs.slice(0, 3);
+         topDocs.forEach((doc, idx) => {
+           projectContextText += `[Citation ${idx + 1}] Document: ${doc.name} (Relevance Score: ${90 - idx}%)\nExcerpt: The relevant systems related to this context involve standard operating procedures and technical integration layers standard to the platform...\n\n`;
+         });
+         hasContext = true;
+       }
+    }
+
+    if (hasContext) {
+      contextSystemPrompt += projectContextText;
+    }
+  }
+  
+  return contextSystemPrompt;
+}
+
 export const useChatStore = create<ChatStore>((set, get) => {
   // Load initial store state from localStorage
   const loadInitialState = (): Partial<ChatState> => {
@@ -474,45 +520,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
         const provider = getProvider(providerId);
         const providerConfig = settings.providerConfigs[providerId];
         
-        let contextSystemPrompt = conversation.systemPrompt || settings.systemPrompt;
-        
-        // Inject Project Memories if conversation is part of a project
-        if (conversation.projectId) {
-          const project = useProjectStore.getState().projects[conversation.projectId];
-          let projectContextText = `\n\n--- PROJECT CONTEXT ---\nProject: ${project?.name || 'Workspace'}\n`;
-          let hasContext = false;
-          
-          if (project?.memories && project.memories.length > 0) {
-             const memoriesText = project.memories.map(m => `- ${m.content}`).join('\n');
-             projectContextText += `\nMemories & Instructions:\n${memoriesText}\n`;
-             hasContext = true;
-          }
-
-          if (project?.files && project.files.length > 0) {
-             const filesList = project.files.map(f => `- ${f.name} (${(f.size / 1024).toFixed(1)} KB)`).join('\n');
-             projectContextText += `\nReference Files Attached:\n${filesList}\n`;
-             hasContext = true;
-          }
-          
-          // Inject Knowledge Base Chunks context
-          if (project?.knowledgeCollections && project.knowledgeCollections.length > 0) {
-             const kDocs = Object.values(useProjectStore.getState().knowledgeDocuments)
-               .filter(d => project.knowledgeCollections.includes(d.collectionId));
-             if (kDocs.length > 0) {
-               projectContextText += `\nRetrieved Knowledge Chunks (Local RAG Vector Search):\n`;
-               // Mock retrieving snippets
-               const topDocs = kDocs.slice(0, 3);
-               topDocs.forEach((doc, idx) => {
-                 projectContextText += `[Citation ${idx + 1}] Document: ${doc.name} (Relevance Score: ${90 - idx}%)\nExcerpt: The relevant systems related to this context involve standard operating procedures and technical integration layers standard to the platform...\n\n`;
-               });
-               hasContext = true;
-             }
-          }
-
-          if (hasContext) {
-            contextSystemPrompt += projectContextText;
-          }
-        }
+        const contextSystemPrompt = getEffectiveSystemPrompt(conversation, settings);
 
         await provider.streamChatCompletion(
           providerConfig,
@@ -676,7 +684,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
             temperature: conversation.temperature || settings.temperature,
             topP: conversation.topP || settings.topP,
             maxTokens: conversation.maxTokens || settings.maxTokens,
-            systemPrompt: conversation.systemPrompt || settings.systemPrompt,
+            systemPrompt: getEffectiveSystemPrompt(conversation, settings),
           },
           (textChunk) => {
             set(state => {
