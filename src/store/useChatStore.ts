@@ -104,8 +104,9 @@ export interface ChatStore extends ChatState {
 function getEffectiveSystemPrompt(conversation: Conversation, settings: AppSettings): string {
   let contextSystemPrompt = conversation.systemPrompt || settings.systemPrompt;
   
-  if (conversation.projectId) {
-    const project = useProjectStore.getState().projects[conversation.projectId];
+  const projectId = conversation.projectId || useProjectStore.getState().activeProjectId;
+  if (projectId) {
+    const project = useProjectStore.getState().projects[projectId];
     let projectContextText = `\n\n--- PROJECT CONTEXT ---\nProject: ${project?.name || 'Workspace'}\n`;
     let hasContext = false;
     
@@ -118,7 +119,7 @@ function getEffectiveSystemPrompt(conversation: Conversation, settings: AppSetti
     if (project?.files && project.files.length > 0) {
        let filesText = `\nReference Files Associated & Contents (Read-only):\n`;
        project.files.forEach(f => {
-         filesText += `\n--- File: ${f.name} ---\n${f.content}\n---------------------\n`;
+         filesText += `\n--- File: ${f.name} ---\n${f.content || ''}\n---------------------\n`;
        });
        projectContextText += filesText;
        hasContext = true;

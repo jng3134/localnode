@@ -32,11 +32,32 @@ export const FilesViewer: React.FC<FilesViewerProps> = ({ project, addFile, dele
     if (!files || files.length === 0) return;
     
     Array.from(files).forEach(file => {
-       addFile(project.id, {
-         name: file.name,
-         size: file.size,
-         type: file.type || 'unknown'
-       });
+      const isText = file.type.startsWith('text/') || 
+                     file.name.match(/\.(txt|js|ts|jsx|tsx|json|html|css|py|md|sql|yaml|yml|xml|csv)$/i);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const textContent = isText ? (event.target?.result as string || '') : `[Binary file: ${file.name}]`;
+        addFile(project.id, {
+          name: file.name,
+          size: file.size,
+          type: file.type || 'unknown',
+          content: textContent,
+          path: '/' + file.name
+        });
+      };
+      
+      if (isText) {
+        reader.readAsText(file);
+      } else {
+        addFile(project.id, {
+          name: file.name,
+          size: file.size,
+          type: file.type || 'unknown',
+          content: `[Binary content of size ${(file.size / 1024).toFixed(1)} KB]`,
+          path: '/' + file.name
+        });
+      }
     });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -96,46 +117,60 @@ export const FilesViewer: React.FC<FilesViewerProps> = ({ project, addFile, dele
                 </div>
               </div>
             ) : isCode ? (
-              <div className="font-mono text-sm text-zinc-300 whitespace-pre-wrap flex gap-4">
-                <div className="text-zinc-600 select-none text-right flex flex-col gap-1 min-w-[24px]">
-                  {Array.from({ length: 40 }).map((_, i) => <div key={i}>{i + 1}</div>)}
+              <div className="font-mono text-sm text-zinc-350 whitespace-pre-wrap flex gap-4">
+                <div className="text-zinc-650 select-none text-right flex flex-col gap-1 min-w-[24px]">
+                  {Array.from({ length: Math.max(1, (selectedFile.content || '').split('\n').length) }).map((_, i) => <div key={i}>{i + 1}</div>)}
                 </div>
                 <div className="flex-1 flex flex-col gap-1">
-                  <div className="text-indigo-400">import <span className="text-[#EDEDED]">React</span> from <span className="text-emerald-300">'react'</span>;</div>
-                  <div>{"\n// "}{selectedFile.name} Source code mock viewer</div>
-                  <div className="text-rose-400">export const <span className="text-indigo-300">App</span> = () =&gt; {"{"}</div>
-                  
-                  {/* Highlighted Passage simulation */}
-                  <div className="bg-indigo-500/20 border-l-2 border-indigo-500 -mx-4 px-4 py-2 mt-4 relative group cursor-pointer transition-colors hover:bg-indigo-500/30">
-                    <div className="absolute right-2 text-[10px] text-indigo-400 font-sans uppercase font-bold top-2 opacity-0 group-hover:opacity-100 transition">Retrieved Context</div>
-                    <div className="text-zinc-400">  // The model retrieved this exact block</div>
-                    <div className="text-white">  const initRAGSearch = async (query) =&gt; {"{"}</div>
-                    <div className="text-zinc-300">    return await vectorStore.search(query);</div>
-                    <div className="text-white">  {"}"};</div>
-                  </div>
+                  {selectedFile.content ? (
+                    <div className="text-[#EDEDED]">{selectedFile.content}</div>
+                  ) : (
+                    <>
+                      <div className="text-indigo-400">import <span className="text-[#EDEDED]">React</span> from <span className="text-emerald-300">'react'</span>;</div>
+                      <div>{"\n// "}{selectedFile.name} Source code mock viewer</div>
+                      <div className="text-rose-400">export const <span className="text-indigo-300">App</span> = () =&gt; {"{"}</div>
+                      
+                      {/* Highlighted Passage simulation */}
+                      <div className="bg-indigo-500/20 border-l-2 border-indigo-500 -mx-4 px-4 py-2 mt-4 relative group cursor-pointer transition-colors hover:bg-indigo-500/30">
+                        <div className="absolute right-2 text-[10px] text-indigo-400 font-sans uppercase font-bold top-2 opacity-0 group-hover:opacity-100 transition">Retrieved Context</div>
+                        <div className="text-zinc-400">  // The model retrieved this exact block</div>
+                        <div className="text-white">  const initRAGSearch = async (query) =&gt; {"{"}</div>
+                        <div className="text-zinc-300">    return await vectorStore.search(query);</div>
+                        <div className="text-white">  {"}"};</div>
+                      </div>
 
-                  <div className="mt-4">  return &lt;div&gt;Hello World&lt;/div&gt;;</div>
-                  <div className="text-rose-400">{"}"}</div>
+                      <div className="mt-4">  return &lt;div&gt;Hello World&lt;/div&gt;;</div>
+                      <div className="text-rose-400">{"}"}</div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="max-w-2xl mx-auto space-y-6 text-sm text-zinc-300 leading-relaxed font-serif pt-4">
                 <h1 className="text-2xl font-bold text-white font-sans">{selectedFile.name.replace(/\.[^/.]+$/, "")}</h1>
-                <p>This is a synthesized mock view for the text/document format showcasing RAG integration.</p>
-                
-                {/* RAG Highlight Example */}
-                <div className="relative group cursor-pointer">
-                  <div className="absolute -inset-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg pointer-events-none opacity-100 transition-all"></div>
-                  <div className="absolute -left-6 top-1 text-emerald-400"><Highlighter size={16} /></div>
-                  <p className="relative z-10 text-emerald-100 py-1">
-                    "When the user inputs a prompt into the system, the routing orchestrator first evaluates 
-                    whether the semantics require broad conversational memory or highly scoped local searches. 
-                    Local file searches trigger the vector database to embed the prompt and return nearest neighbors."
-                  </p>
-                </div>
+                {selectedFile.content ? (
+                  <div className="text-zinc-300 whitespace-pre-wrap font-sans text-sm bg-black/30 p-4 border border-white/[0.05] rounded-xl leading-relaxed">
+                    {selectedFile.content}
+                  </div>
+                ) : (
+                  <>
+                    <p>This is a synthesized mock view for the text/document format showcasing RAG integration.</p>
+                    
+                    {/* RAG Highlight Example */}
+                    <div className="relative group cursor-pointer">
+                      <div className="absolute -inset-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg pointer-events-none opacity-100 transition-all"></div>
+                      <div className="absolute -left-6 top-1 text-emerald-400"><Highlighter size={16} /></div>
+                      <p className="relative z-10 text-emerald-100 py-1">
+                        "When the user inputs a prompt into the system, the routing orchestrator first evaluates 
+                        whether the semantics require broad conversational memory or highly scoped local searches. 
+                        Local file searches trigger the vector database to embed the prompt and return nearest neighbors."
+                      </p>
+                    </div>
 
-                <p>The system evaluates the top K nodes and synthesizes a direct response injecting these highlight references natively into the UI component layer so the user can verify origin data easily.</p>
-                <p>Security rules define exactly which user can access what collection, governed by standard enterprise OAuth scopes and RBAC tables.</p>
+                    <p>The system evaluates the top K nodes and synthesizes a direct response injecting these highlight references natively into the UI component layer so the user can verify origin data easily.</p>
+                    <p>Security rules define exactly which user can access what collection, governed by standard enterprise OAuth scopes and RBAC tables.</p>
+                  </>
+                )}
               </div>
             )}
           </div>
