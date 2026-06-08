@@ -266,27 +266,93 @@ export const ChatInput: React.FC = () => {
       <div className="relative border border-white/20 bg-white/10 backdrop-blur-2xl rounded-[2rem] p-4 pt-5 focus-within:border-white/30 transition-all font-sans shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
         
         {/* Upload Trigger Top Rail */}
-        <div className="flex items-center gap-2 mb-2 px-2">
-           <button 
-             type="button"
-             onClick={() => fileInputRef.current?.click()}
-             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-colors cursor-pointer border border-white/5 active:scale-95"
-           >
-              <Paperclip size={14} className="text-indigo-400" />
-              <span>Attach Files</span>
-           </button>
-           <input 
-             type="file" 
-             multiple 
-             className="hidden" 
-             ref={fileInputRef}
-             onChange={(e) => {
-               if (e.target.files) processFiles(Array.from(e.target.files));
-               if (fileInputRef.current) fileInputRef.current.value = '';
-             }} 
-           />
+        <div className="flex items-center justify-between mb-2 px-2">
+           <div className="flex items-center gap-2">
+             <button 
+               type="button"
+               onClick={() => fileInputRef.current?.click()}
+               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-colors cursor-pointer border border-white/5 active:scale-95"
+             >
+                <Paperclip size={14} className="text-indigo-400" />
+                <span>Attach</span>
+             </button>
+             <input 
+               type="file" 
+               multiple 
+               className="hidden" 
+               ref={fileInputRef}
+               onChange={(e) => {
+                 if (e.target.files) processFiles(Array.from(e.target.files));
+                 if (fileInputRef.current) fileInputRef.current.value = '';
+               }} 
+             />
+
+             {/* Models Shift Dropdown */}
+             <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowModels(!showModels);
+                  setShowTemplates(false);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] uppercase tracking-wider text-zinc-300 hover:text-white cursor-pointer font-semibold font-sans select-none transition-colors"
+              >
+                <Cpu size={11} className="text-indigo-400" />
+                <span><b className="text-indigo-200 normal-case">{activeModelId || 'Select Model'}</b></span>
+                <ChevronDown size={11} className={`transition-transform duration-150 ${showModels ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showModels && (
+                <div className="absolute left-0 bottom-full mb-2 z-30 w-72 md:w-80 rounded-xl border border-white/10 bg-[#07162c]/95 backdrop-blur-lg shadow-2xl overflow-hidden font-sans p-1">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] mb-1.5">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-[#9ac1dc]">
+                      Switch Active Model
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => fetchModels()}
+                      className="text-[9px] text-zinc-300 hover:text-white flex items-center gap-1 transition-colors font-semibold uppercase tracking-wider cursor-pointer"
+                    >
+                      <RefreshCw size={9} className={isLoadingModels ? 'animate-spin' : ''} />
+                      <span>Sync</span>
+                    </button>
+                  </div>
+                  {models.length === 0 ? (
+                    <div className="px-3 py-4 text-xs text-zinc-400 text-center">
+                      No models found for <b className="text-[#9ac1dc]">{activeProviderId?.toUpperCase()}</b>.
+                      <br />
+                      <span className="text-[10px] text-zinc-500 mt-1.5 block">Configure this provider or endpoint in Settings.</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto scrollbar-thin">
+                      {models.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            updateSettings({ activeModelId: m.id });
+                            setShowModels(false);
+                          }}
+                          className={`flex flex-col text-left px-3 py-2 text-xs rounded-lg cursor-pointer transition-colors ${
+                            activeModelId === m.id
+                              ? 'bg-indigo-500/10 text-indigo-300 font-medium'
+                              : 'text-zinc-200 hover:bg-white/5'
+                          }`}
+                        >
+                          <span className="font-semibold line-clamp-1">{m.name}</span>
+                          <span className="text-[10px] text-zinc-400 truncate max-w-full">
+                            {m.description || `ID: ${m.id}`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+             </div>
+           </div>
            
-           <span className="text-[10px] text-zinc-500 tracking-wider font-medium ml-1">or drag & drop anywhere</span>
+           <span className="text-[10px] text-zinc-500 tracking-wider font-medium ml-1 hidden sm:inline-block">or drag & drop anywhere</span>
         </div>
 
         {/* Input area */}
