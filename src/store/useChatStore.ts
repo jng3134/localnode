@@ -8,6 +8,7 @@ import { ChatState, Conversation, Message, AppSettings, Model, ProviderConfig } 
 import { getProvider } from '../lib/providers';
 import { toast } from 'sonner';
 import { useProjectStore } from './useProjectStore';
+import { guessModelCapabilities } from '../lib/capabilities';
 
 // Custom lightweight UID generator to avoid external dependencies
 function generateUUID() {
@@ -214,7 +215,8 @@ export const useChatStore = create<ChatStore>((set, get) => {
 
         const modelsWithFavorites = fetchedModels.map(m => ({
           ...m,
-          favorite: favorites.has(m.id)
+          favorite: favorites.has(m.id),
+          capabilities: guessModelCapabilities(m.id, currentProviderId)
         }));
 
         set({
@@ -245,8 +247,12 @@ export const useChatStore = create<ChatStore>((set, get) => {
             const geminiProvider = getProvider('gemini');
             const geminiModels = await geminiProvider.getModels(geminiConfig);
             if (geminiModels && geminiModels.length > 0) {
+              const geminiModelsWithCaps = geminiModels.map(m => ({
+                ...m,
+                capabilities: guessModelCapabilities(m.id, 'gemini')
+              }));
               set({
-                models: geminiModels,
+                models: geminiModelsWithCaps,
                 isLoadingModels: false,
                 modelsError: null
               });

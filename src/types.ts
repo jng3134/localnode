@@ -27,6 +27,49 @@ export interface Message {
   attachments?: MessageAttachment[];
 }
 
+export enum InputType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  AUDIO = 'AUDIO',
+  VIDEO = 'VIDEO',
+  PDF = 'PDF',
+  DOCX = 'DOCX',
+  CSV = 'CSV',
+  CODE = 'CODE'
+}
+
+export enum OutputType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  AUDIO = 'AUDIO',
+  JSON = 'JSON',
+  CODE = 'CODE',
+  MARKDOWN = 'MARKDOWN'
+}
+
+export interface ModelCapability {
+  id: string;
+  name: string;
+  provider: string;
+  family: string;
+  size: string;
+  quantization?: string;
+  contextWindow: number;
+  supportsVision: boolean;
+  supportsTools: boolean;
+  supportsFunctionCalling: boolean;
+  supportsReasoning: boolean;
+  supportsEmbeddings: boolean;
+  supportsStreaming: boolean;
+  supportsImageGeneration: boolean;
+  supportsAudioInput: boolean;
+  supportsAudioOutput: boolean;
+  supportsVideoInput: boolean;
+  supportsStructuredOutput: boolean;
+  inputTypes: InputType[];
+  outputTypes: OutputType[];
+}
+
 export interface Model {
   id: string;
   name: string;
@@ -35,6 +78,7 @@ export interface Model {
   contextLength?: number;
   description?: string;
   favorite?: boolean;
+  capabilities?: ModelCapability;
 }
 
 export interface ProviderConfig {
@@ -55,6 +99,8 @@ export interface Memory {
 export interface ProjectFile {
   id: string;
   name: string;
+  path?: string;
+  content?: string;
   size: number;
   type: string; // mime type or extension
   uploadedAt: number;

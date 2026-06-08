@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Memory, ProjectFile } from '../../types';
 import { KnowledgeBasePage } from './KnowledgeBasePage';
+import { FilesViewer } from './FilesViewer';
+import { CodeWorkspace } from '../workspace/CodeWorkspace';
 
 export const ProjectDashboard = () => {
   const activeProjectId = useProjectStore(state => state.activeProjectId);
@@ -32,35 +34,16 @@ export const ProjectDashboard = () => {
   const setActiveConversationId = useChatStore(state => state.setActiveConversationId);
   const createConversation = useChatStore(state => state.createConversation);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'chats' | 'files' | 'memories' | 'knowledge' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'chats' | 'files' | 'memories' | 'knowledge' | 'settings' | 'workspace'>('overview');
   
   const [newMemoryProcess, setNewMemoryProcess] = useState(false);
   const [newMemoryText, setNewMemoryText] = useState('');
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!activeProjectId) return null;
   const project = projects[activeProjectId];
   if (!project) return null;
 
   const projectChats = project.chats.map(id => conversations[id]).filter(Boolean).sort((a,b) => b.updatedAt - a.updatedAt);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    // Fake file upload process
-    const fileList = Array.from(files);
-    fileList.forEach(file => {
-       addFile(project.id, {
-         name: file.name,
-         size: file.size,
-         type: file.type || 'unknown'
-       });
-    });
-    toast.success(`Uploaded ${fileList.length} files to project ${project.name}`);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
 
   const handleAddMemory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +96,7 @@ export const ProjectDashboard = () => {
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl w-max border border-white/[0.05]">
-          {['overview', 'chats', 'files', 'memories', 'knowledge', 'settings'].map((tab) => (
+          {['overview', 'chats', 'files', 'memories', 'knowledge', 'settings', 'workspace'].map((tab) => (
              <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -121,7 +104,7 @@ export const ProjectDashboard = () => {
                   activeTab === tab ? 'bg-white/15 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
                 }`}
              >
-               {tab}
+               {tab === 'workspace' ? 'Code Workspace' : tab}
              </button>
           ))}
         </div>
@@ -219,48 +202,8 @@ export const ProjectDashboard = () => {
           {/* FILES */}
           {activeTab === 'files' && (
             <AnimatePresence mode="wait">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                <div className="flex items-center justify-between mt-2 mb-6">
-                  <h3 className="text-lg font-medium text-white">Knowledge Base</h3>
-                  <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 shadow-md text-white rounded-lg text-xs font-medium cursor-pointer transition">
-                    <Upload size={14} /> Upload Support
-                  </button>
-                  <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-                </div>
-
-                {project.files.length === 0 ? (
-                  <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center p-12 bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 border-dashed rounded-3xl cursor-pointer transition-colors"
-                  >
-                    <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center text-zinc-400 mb-4">
-                      <Upload size={24} />
-                    </div>
-                    <div className="text-zinc-200 font-medium mb-1">Upload files context</div>
-                    <div className="text-zinc-500 text-sm">Drag and drop or click here (PDF, TXT, MD, CSV)</div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {project.files.map(f => (
-                      <div key={f.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-4 group">
-                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center flex-shrink-0 text-emerald-400">
-                          <File size={20} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-[#EDEDED] truncate mb-0.5 pr-2">{f.name}</div>
-                          <div className="text-xs text-zinc-500">{(f.size / 1024).toFixed(1)} KB</div>
-                        </div>
-                        <button 
-                          onClick={() => deleteFile(project.id, f.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
-                          title="Delete File"
-                        >
-                           <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="h-full">
+                <FilesViewer project={project} addFile={addFile} deleteFile={deleteFile} />
               </motion.div>
             </AnimatePresence>
           )}
@@ -355,6 +298,13 @@ export const ProjectDashboard = () => {
                 </div>
               </motion.div>
             </AnimatePresence>
+          )}
+
+          {/* WORKSPACE */}
+          {activeTab === 'workspace' && (
+            <div className="h-[calc(100vh-140px)] -mx-6 mb-[-1.5rem]">
+              <CodeWorkspace project={project} />
+            </div>
           )}
 
         </div>
