@@ -293,16 +293,18 @@ export const ChatInput: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setShowModels(true);
+                  setShowModels(!showModels);
                   setShowTemplates(false);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] uppercase tracking-wider text-zinc-300 hover:text-white cursor-pointer font-semibold font-sans select-none transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] uppercase tracking-wider text-zinc-300 hover:text-white cursor-pointer font-semibold font-sans select-none transition-all duration-150 active:scale-95"
               >
-                <Cpu size={11} className="text-indigo-400" />
-                <span><b className="text-indigo-200 normal-case">{activeModelId || 'Select Model'}</b></span>
+                <Cpu size={11} className="text-indigo-400 animate-pulse" />
+                <span><b className="text-indigo-200 normal-case">{models.find(m => m.id === activeModelId)?.name || activeModelId || 'Select Model'}</b></span>
               </button>
 
-              {showModels && <ModelSelectorModal onClose={() => setShowModels(false)} />}
+              <AnimatePresence>
+                {showModels && <ModelSelectorModal onClose={() => setShowModels(false)} />}
+              </AnimatePresence>
              </div>
            </div>
            
