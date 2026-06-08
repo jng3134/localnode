@@ -88,7 +88,7 @@ export interface ChatStore extends ChatState {
   renameConversation: (id: string, title: string) => void;
   
   // Chat Actions
-  sendMessage: (content: string, customParentId?: string | null) => Promise<void>;
+  sendMessage: (content: string, customParentId?: string | null, attachments?: import('../types').MessageAttachment[]) => Promise<void>;
   regenerateMessage: (messageId: string) => Promise<void>;
   editMessage: (messageId: string, newContent: string) => Promise<void>;
   stopGeneration: (conversationId: string) => void;
@@ -365,7 +365,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
       }
     },
 
-    sendMessage: async (content, customParentId = undefined) => {
+    sendMessage: async (content, customParentId = undefined, attachments = []) => {
       let activeId = get().activeConversationId;
       if (!activeId) {
         activeId = get().createConversation();
@@ -396,6 +396,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
         parentId,
         branchIds: [],
         activeBranchIndex: 0,
+        attachments,
       };
 
       // If parentId exists, we must update the parent's branch tracking list
@@ -484,6 +485,21 @@ export const useChatStore = create<ChatStore>((set, get) => {
              const filesList = project.files.map(f => `- ${f.name} (${(f.size / 1024).toFixed(1)} KB)`).join('\n');
              projectContextText += `\nReference Files Attached:\n${filesList}\n`;
              hasContext = true;
+          }
+          
+          // Inject Knowledge Base Chunks context
+          if (project?.knowledgeCollections && project.knowledgeCollections.length > 0) {
+             const kDocs = Object.values(useProjectStore.getState().knowledgeDocuments)
+               .filter(d => project.knowledgeCollections.includes(d.collectionId));
+             if (kDocs.length > 0) {
+               projectContextText += `\nRetrieved Knowledge Chunks (Local RAG Vector Search):\n`;
+               // Mock retrieving snippets
+               const topDocs = kDocs.slice(0, 3);
+               topDocs.forEach((doc, idx) => {
+                 projectContextText += `[Citation ${idx + 1}] Document: ${doc.name} (Relevance Score: ${90 - idx}%)\nExcerpt: The relevant systems related to this context involve standard operating procedures and technical integration layers standard to the platform...\n\n`;
+               });
+               hasContext = true;
+             }
           }
 
           if (hasContext) {

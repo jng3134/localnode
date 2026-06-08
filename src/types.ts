@@ -5,6 +5,15 @@
 
 export type RoleProperty = 'user' | 'assistant' | 'system';
 
+export interface MessageAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
+  previewBase64?: string;
+}
+
 export interface Message {
   id: string;
   role: RoleProperty;
@@ -15,6 +24,7 @@ export interface Message {
   branchIds?: string[]; // IDs of child messages (alternative edits/responses)
   activeBranchIndex?: number; // Pointer to the selected child branch
   error?: string; // Error message if generation failed
+  attachments?: MessageAttachment[];
 }
 
 export interface Model {
@@ -50,6 +60,31 @@ export interface ProjectFile {
   uploadedAt: number;
 }
 
+export interface KnowledgeCollection {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  type: 'documents' | 'manuals' | 'codebase' | 'notes' | 'custom';
+  createdAt: number;
+  updatedAt: number;
+  documentCount: number;
+  chunkCount: number;
+}
+
+export interface KnowledgeDocument {
+  id: string;
+  collectionId: string;
+  name: string;
+  path?: string; // used for codebase
+  fileType: string;
+  fileSize: number;
+  uploadedAt: number;
+  chunkCount: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  content?: string; // stored locally for simplicity or could be on backend
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -61,6 +96,7 @@ export interface Project {
   chats: string[]; // conversation IDs
   files: ProjectFile[];
   memories: Memory[];
+  knowledgeCollections: string[]; // collection IDs
 }
 
 export interface Conversation {

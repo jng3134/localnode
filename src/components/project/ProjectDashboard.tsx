@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { useChatStore } from '../../store/useChatStore';
+import { toast } from 'sonner';
 import { 
   MessageSquare, 
   FileText, 
@@ -16,7 +17,7 @@ import {
   File
 } from 'lucide-react';
 import { Memory, ProjectFile } from '../../types';
-import { toast } from 'sonner';
+import { KnowledgeBasePage } from './KnowledgeBasePage';
 
 export const ProjectDashboard = () => {
   const activeProjectId = useProjectStore(state => state.activeProjectId);
@@ -31,7 +32,7 @@ export const ProjectDashboard = () => {
   const setActiveConversationId = useChatStore(state => state.setActiveConversationId);
   const createConversation = useChatStore(state => state.createConversation);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'chats' | 'files' | 'memories' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'chats' | 'files' | 'memories' | 'knowledge' | 'settings'>('overview');
   
   const [newMemoryProcess, setNewMemoryProcess] = useState(false);
   const [newMemoryText, setNewMemoryText] = useState('');
@@ -112,7 +113,7 @@ export const ProjectDashboard = () => {
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl w-max border border-white/[0.05]">
-          {['overview', 'chats', 'files', 'memories', 'settings'].map((tab) => (
+          {['overview', 'chats', 'files', 'memories', 'knowledge', 'settings'].map((tab) => (
              <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -324,6 +325,11 @@ export const ProjectDashboard = () => {
                 )}
               </motion.div>
             </AnimatePresence>
+          )}
+
+          {/* KNOWLEDGE BASE */}
+          {activeTab === 'knowledge' && (
+            <KnowledgeBasePage projectId={project.id} />
           )}
 
           {/* SETTINGS */}

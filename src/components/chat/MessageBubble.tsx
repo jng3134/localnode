@@ -22,7 +22,10 @@ import {
   ChevronRight,
   AlertCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  FileArchive,
+  File
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -140,6 +143,37 @@ export const MessageBubble: React.FC<MessageBubbleProps> = memo(({ message, bran
             </div>
           )}
         </div>
+
+        {/* Attachments Preview Row */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {message.attachments.map((att) => {
+              const isDoc = att.type.includes('pdf') || att.type.includes('document') || att.name.endsWith('.docx') || att.name.endsWith('.pdf');
+              const isZip = att.type.includes('zip') || att.name.endsWith('.zip');
+              const isImage = att.type.startsWith('image/');
+              
+              return (
+                <div key={att.id} className="flex items-center gap-2.5 bg-white/[0.05] border border-white/10 rounded-xl p-1.5 pr-3 cursor-pointer hover:bg-white/[0.08] transition-colors">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-black/40 flex items-center justify-center border border-white/5 relative">
+                    {isImage && (att.url || att.previewBase64) ? (
+                      <img src={att.url || att.previewBase64} alt={att.name} className="w-full h-full object-cover" />
+                    ) : isDoc ? (
+                      <FileText size={16} className="text-rose-400" />
+                    ) : isZip ? (
+                      <FileArchive size={16} className="text-amber-400" />
+                    ) : (
+                      <File size={16} className="text-indigo-400" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                     <span className="text-zinc-200 text-xs font-semibold truncate tracking-tight">{att.name}</span>
+                     <span className="text-zinc-500 text-[9px] tracking-widest uppercase">{(att.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Text Body */}
         <div className="text-[#EDEDED] text-sm md:text-base leading-relaxed break-words font-sans selection:bg-indigo-500/25">

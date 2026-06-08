@@ -68,6 +68,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, onOpenSettin
     
     if (projectId) {
       setActiveProjectId(projectId);
+    } else {
+      setActiveProjectId(null);
     }
     
     // Defer creation slightly to allow store activeProjectId to update
